@@ -1,27 +1,34 @@
 body {
-    font-family: Arial;
-    margin: 20px;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
 }
 
-h1, h2 {
-    color: #333;
+.section {
+    margin-top: 20px;
+}
+
+input {
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
 }
 
 button {
-    margin: 5px;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 10px 18px;
+    background: #4E8DF5;
     border: none;
-    background: #008cff;
+    border-radius: 6px;
     color: white;
     cursor: pointer;
 }
 
-button:hover {
-    background: #006fd1;
+.hidden {
+    display: none;
 }
 
-#gallery img {
-    border: 2px solid #ccc;
-    margin: 10px;
+ul {
+    list-style: none;
+    padding: 0;
 }
