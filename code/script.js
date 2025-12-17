@@ -1,25 +1,65 @@
 import { storage, db } from "./firebase-config.js";
+
 import {
   ref,
   uploadBytes,
   getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
 
 import {
   collection,
   addDoc,
   getDocs,
   updateDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  doc,
+  setDoc,
+  getDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const uploadBtn = document.getElementById("uploadBtn");
-const fileInput = document.getElementById("fileInput");
+// DOM Elemente
+const startBtn = document.getElementById("startGameBtn");
+const waitingMsg = document.getElementById("waitingMsg");
+const targetContainer = document.getElementById("target-container");
+const uploadContainer = document.getElementById("upload-container");
 const timerDisplay = document.getElementById("timer");
 const gallery = document.getElementById("gallery");
 const voteSection = document.getElementById("vote-section");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
 
-let time = 60; // 60 Sekunden Spielzeit
+// Spielstatus Dokument
+const statusRef = doc(db, "game", "status");
+
+let time = 60;
+
+// ---------- SPIEL STARTEN (HOST klickt Button) ----------
+startBtn.onclick = async () => {
+  await setDoc(statusRef, { gameStarted: true });
+  startBtn.style.display = "none";
+  waitingMsg.style.display = "none";
+  console.log("Spiel gestartet!");
+};
+
+// ---------- LISTENER: WARTET AUF SPIELSTART ----------
+onSnapshot(statusRef, (snapshot) => {
+  const data = snapshot.data();
+
+  if (data && data.gameStarted === true) {
+    console.log("Spielstart empfangen!");
+    startBtn.style.display = "none";
+    waitingMsg.style.display = "none";
+
+    targetContainer.style.display = "block";
+    uploadContainer.style.display = "block";
+    timerDisplay.style.display = "block";
+
+    startTimer();
+  } else {
+    // Spiel noch nicht gestartet
+    waitingMsg.style.display = "block";
+  }
+});
 
 // ---------- TIMER ----------
 function startTimer() {
@@ -33,8 +73,6 @@ function startTimer() {
     }
   }, 1000);
 }
-
-startTimer();
 
 // ---------- BILD HOCHLADEN ----------
 uploadBtn.onclick = async () => {
@@ -60,14 +98,20 @@ async function loadImagesForVoting() {
 
   snap.forEach(docu => {
     const data = docu.data();
+
+    const wrapper = document.createElement("div");
+    wrapper.style.margin = "20px";
+
     const img = document.createElement("img");
     img.src = data.url;
-    gallery.appendChild(img);
+    wrapper.appendChild(img);
 
     const btn = document.createElement("button");
     btn.innerText = "Vote";
     btn.onclick = () => vote(docu.id, data.votes);
-    gallery.appendChild(btn);
+    wrapper.appendChild(btn);
+
+    gallery.appendChild(wrapper);
   });
 }
 

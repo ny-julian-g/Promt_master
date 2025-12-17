@@ -1,5 +1,5 @@
 body {
-  font-family: sans-serif;
+  font-family: Arial, sans-serif;
   padding: 20px;
   text-align: center;
 }
@@ -7,4 +7,10 @@ body {
 #gallery img {
   width: 200px;
   margin: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
 }
