@@ -20,6 +20,8 @@ const lobbyCode = document.getElementById("lobbyCode");
 const lobbyPlayers = document.getElementById("lobbyPlayers");
 
 const startRoundBtn = document.getElementById("startRoundBtn");
+const finishRoundBtn = document.getElementById("finishRoundBtn");
+
 const gameScreen = document.getElementById("gameScreen");
 const statusTxt = document.getElementById("statusTxt");
 
@@ -27,21 +29,22 @@ const imageUpload = document.getElementById("imageUpload");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const uploadArea = document.getElementById("uploadArea");
 
-const finishBtn = document.getElementById("finishBtn");
-
 const votingScreen = document.getElementById("votingScreen");
 const imagesContainer = document.getElementById("imagesContainer");
+
+const hostResults = document.getElementById("hostResults");
+const winnerImage = document.getElementById("winnerImage");
 
 let teamCode = null;
 let username = null;
 let isHost = false;
 
-// ==============================
+// ===================================================
 // HOST SPIEL ERSTELLEN
-// ==============================
+// ===================================================
 createGameBtn.onclick = async () => {
   isHost = true;
-  username = "Host"; // Host lädt kein Bild hoch
+  username = "Host";
 
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -50,7 +53,9 @@ createGameBtn.onclick = async () => {
     gameStarted: false,
     countdown: 600,
     images: {},
-    votingStarted: false
+    votes: {},
+    votingStarted: false,
+    winner: null
   });
 
   startScreen.classList.add("hidden");
@@ -60,9 +65,9 @@ createGameBtn.onclick = async () => {
   startLobbyListener();
 };
 
-// ==============================
+// ===================================================
 // SPIEL BEITRETEN
-// ==============================
+// ===================================================
 joinGameBtn.onclick = async () => {
   const code = joinCodeInput.value.trim();
   username = usernameInput.value.trim();
@@ -85,16 +90,15 @@ joinGameBtn.onclick = async () => {
   startGameListener();
 };
 
-// ==============================
-// HOST: LOBBY LISTENER
-// ==============================
+// ===================================================
+// HOST LOBBY LISTENER
+// ===================================================
 function startLobbyListener() {
   const ref = doc(db, "games", teamCode);
 
   onSnapshot(ref, snap => {
     const data = snap.data();
 
-    // Spielerliste aktualisieren
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -110,9 +114,9 @@ function startLobbyListener() {
   });
 }
 
-// ==============================
-// GAME LISTENER – Synced bei allen
-// ==============================
+// ===================================================
+// SPIEL LIVE-UPDATES
+// ===================================================
 function startGameListener() {
   const ref = doc(db, "games", teamCode);
 
@@ -121,51 +125,44 @@ function startGameListener() {
 
     statusTxt.textContent = `Countdown: ${data.countdown}s`;
 
-    // Host hat keinen Uploadbereich
     if (isHost) uploadArea.classList.add("hidden");
     else uploadArea.classList.remove("hidden");
-
-    // Fertig Button nur für Host
-    if (isHost) finishBtn.classList.remove("hidden");
 
     if (data.votingStarted) {
       gameScreen.classList.add("hidden");
       votingScreen.classList.remove("hidden");
-      renderImages(data.images);
+      renderImages(data.images, data.votes);
+
+      if (isHost) showHostResults(data);
     }
   });
 }
 
-// ==============================
-// HOST STARTET RUNDE
-// ==============================
+// ===================================================
+// HOST: COUNTDOWN / RUNDE STARTEN
+// ===================================================
 startRoundBtn.onclick = async () => {
   await updateDoc(doc(db, "games", teamCode), {
     gameStarted: true
   });
-
   startCountdown();
 };
 
-// ==============================
-// HOST beendet Runde frühzeitig
-// ==============================
-finishBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", teamCode), {
-    votingStarted: true
-  });
+// ===================================================
+// HOST: RUNDE MANUELL BEENDEN
+// ===================================================
+finishRoundBtn.onclick = async () => {
+  startVoting();
 };
 
-// ==============================
-// COUNTDOWN (läuft nur auf Host-Seite)
-// ==============================
+// ===================================================
+// COUNTDOWN SYSTEM
+// ===================================================
 function startCountdown() {
   const interval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
     const snap = await getDoc(ref);
     const data = snap.data();
-
-    if (!data.gameStarted) return;
 
     if (data.countdown <= 0) {
       clearInterval(interval);
@@ -177,48 +174,108 @@ function startCountdown() {
   }, 1000);
 }
 
-// ==============================
-// Bild Upload
-// ==============================
+// ===================================================
+// BILD HOCHLADEN
+// ===================================================
 uploadImageBtn.onclick = async () => {
   if (isHost) return;
 
   const file = imageUpload.files[0];
-  if (!file) return alert("Bitte Bild auswählen!");
+  if (!file) return alert("Bitte ein Bild auswählen!");
 
   const reader = new FileReader();
   reader.onload = async () => {
+    const base64 = reader.result;
+
     await updateDoc(doc(db, "games", teamCode), {
-      [`images.${username}`]: reader.result
+      [`images.${username}`]: base64
     });
+
     alert("Bild hochgeladen!");
   };
+
   reader.readAsDataURL(file);
 };
 
-// ==============================
-// Voting starten
-// ==============================
+// ===================================================
+// VOTING STARTEN
+// ===================================================
 async function startVoting() {
   await updateDoc(doc(db, "games", teamCode), {
     votingStarted: true
   });
 }
 
-// ==============================
-// Bilder anzeigen
-// ==============================
-function renderImages(images) {
+// ===================================================
+// BILDER RENDERN + VOTE BUTTONS
+// ===================================================
+function renderImages(images, votes) {
   imagesContainer.innerHTML = "";
 
-  Object.entries(images).forEach(([name, img]) => {
+  Object.entries(images).forEach(([player, img]) => {
+    if (player === "Host") return; // Host kein Bild
+
     const div = document.createElement("div");
     div.classList.add("imgBox");
 
+    const alreadyVoted = votes && votes[username];
+
     div.innerHTML = `
-      <h3>${name}</h3>
-      <img src="${img}">
+      <h3>${player}</h3>
+      <img src="${img}"/>
+      ${
+        alreadyVoted
+          ? ""
+          : `<button class="voteBtn" data-player="${player}">Vote</button>`
+      }
     `;
+
     imagesContainer.appendChild(div);
   });
+
+  document.querySelectorAll(".voteBtn").forEach(btn => {
+    btn.onclick = async () => {
+      const chosen = btn.dataset.player;
+
+      await updateDoc(doc(db, "games", teamCode), {
+        [`votes.${username}`]: chosen
+      });
+
+      alert(`Du hast für ${chosen} gestimmt!`);
+    };
+  });
+}
+
+// ===================================================
+// HOST: ZEIGE ERGEBNISSE & GEWINNER
+// ===================================================
+function showHostResults(gameData) {
+  hostResults.innerHTML = "<h2>Ergebnisse</h2>";
+
+  const voteCounts = {};
+
+  Object.values(gameData.votes).forEach(v => {
+    voteCounts[v] = (voteCounts[v] || 0) + 1;
+  });
+
+  let winner = null;
+  let maxVotes = -1;
+
+  Object.entries(voteCounts).forEach(([player, count]) => {
+    const p = document.createElement("p");
+    p.textContent = `${player}: ${count} Stimmen`;
+    hostResults.appendChild(p);
+
+    if (count > maxVotes) {
+      maxVotes = count;
+      winner = player;
+    }
+  });
+
+  if (winner) {
+    winnerImage.innerHTML = `
+      <h2>Gewinner: ${winner}</h2>
+      <img src="${gameData.images[winner]}"/>
+    `;
+  }
 }
