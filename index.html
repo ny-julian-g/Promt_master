@@ -1,38 +1,45 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Team Lobby</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <title>Bild Game</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+  <h1>Bild Ähnlichkeit Game</h1>
 
-    <h1>Team Lobby</h1>
+  <!-- HOST / JOIN UI -->
+  <div id="menu">
+    <button id="hostBtn">Spiel erstellen</button>
 
-    <div class="section">
-        <button id="createLobbyBtn">Lobby erstellen</button>
-        <p id="lobbyCodeDisplay"></p>
-    </div>
+    <h3>Oder Spiel beitreten</h3>
+    <input id="teamCodeInput" placeholder="Teamcode eingeben" />
+    <button id="joinBtn">Beitreten</button>
+  </div>
 
-    <div class="section">
-        <input id="joinCodeInput" placeholder="Team-Code eingeben" />
-        <button id="joinLobbyBtn">Beitreten</button>
-    </div>
+  <!-- HOST LOBBY -->
+  <div id="hostLobby" class="hidden">
+    <h2>Teamcode:</h2>
+    <div id="hostCode" class="bigCode"></div>
 
-    <div id="lobbyArea" class="hidden">
-        <h2>Lobby</h2>
-        <p><strong>Lobby Code:</strong> <span id="lobbyCode"></span></p>
+    <h3>Spieler im Team:</h3>
+    <ul id="playerList"></ul>
 
-        <h3>Spieler:</h3>
-        <ul id="playerList"></ul>
+    <button id="startGameBtn">Spiel starten</button>
+  </div>
 
-        <button id="startGameBtn" class="hostOnly hidden">Spiel starten</button>
-        <p id="gameStatus"></p>
-    </div>
+  <!-- GAME UI -->
+  <div id="gameScreen" class="hidden">
+    <h2>Runde läuft!</h2>
+    <p>Bild hochladen:</p>
+    <input type="file" id="uploadInput" />
+    <button id="uploadBtn">Upload senden</button>
 
-    <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js"></script>
+    <p id="statusText"></p>
+  </div>
 
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>

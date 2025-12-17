@@ -1,109 +1,123 @@
-import { db } from "./firebase-config.js";
 import {
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    onSnapshot,
-    collection,
-    query,
-    where,
-    addDoc
+  db
+} from "./firebase-config.js";
+
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Elements
-const createLobbyBtn = document.getElementById("createLobbyBtn");
-const joinLobbyBtn = document.getElementById("joinLobbyBtn");
-const joinCodeInput = document.getElementById("joinCodeInput");
-const lobbyArea = document.getElementById("lobbyArea");
-const lobbyCodeEl = document.getElementById("lobbyCode");
-const playerListEl = document.getElementById("playerList");
+
+// HTML Elements
+const hostBtn = document.getElementById("hostBtn");
+const joinBtn = document.getElementById("joinBtn");
+const teamCodeInput = document.getElementById("teamCodeInput");
+const hostLobby = document.getElementById("hostLobby");
+const hostCode = document.getElementById("hostCode");
+const playerList = document.getElementById("playerList");
 const startGameBtn = document.getElementById("startGameBtn");
-const gameStatus = document.getElementById("gameStatus");
+const menu = document.getElementById("menu");
+const gameScreen = document.getElementById("gameScreen");
+const uploadInput = document.getElementById("uploadInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const statusText = document.getElementById("statusText");
 
-let currentLobby = null;
-let currentPlayerId = null;
-let isHost = false;
+let currentTeam = null;
+let playerName = "Player" + Math.floor(Math.random() * 9000);
 
-// Random code generator (z.B. "XK92")
-function generateCode() {
-    return Math.random().toString(36).substring(2, 7).toUpperCase();
-}
+// ----------------------------
+// HOST erstellt Team
+// ----------------------------
+hostBtn.onclick = async () => {
+  const code = Math.random().toString().substring(2, 7);
 
-// HOST → Lobby erstellen
-createLobbyBtn.onclick = async () => {
-    const code = generateCode();
+  currentTeam = code;
 
-    await setDoc(doc(db, "lobbies", code), {
-        code: code,
-        started: false
+  await setDoc(doc(db, "games", code), {
+    players: [],
+    gameStarted: false
+  });
+
+  menu.classList.add("hidden");
+  hostLobby.classList.remove("hidden");
+  hostCode.textContent = code;
+
+  startPlayerListener(code);
+};
+
+
+// ----------------------------
+// Spieler tritt Team bei
+// ----------------------------
+joinBtn.onclick = async () => {
+  const code = teamCodeInput.value.trim();
+
+  if (!code) return alert("Teamcode eingeben!");
+
+  const ref = doc(db, "games", code);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return alert("Spiel existiert nicht!");
+
+  currentTeam = code;
+
+  await updateDoc(ref, {
+    players: arrayUnion(playerName)
+  });
+
+  menu.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  statusText.textContent = "Warte auf Spielstart...";
+};
+
+
+// ----------------------------
+// HOST sieht Spieler live
+// ----------------------------
+function startPlayerListener(code) {
+  const ref = doc(db, "games", code);
+
+  onSnapshot(ref, snap => {
+    const data = snap.data();
+
+    playerList.innerHTML = "";
+    data.players.forEach(p => {
+      let li = document.createElement("li");
+      li.textContent = p;
+      playerList.appendChild(li);
     });
 
-    isHost = true;
-    joinLobby(code);
-};
-
-// PLAYER → lobby beitreten
-joinLobbyBtn.onclick = () => {
-    const code = joinCodeInput.value.trim().toUpperCase();
-    if (!code) return alert("Bitte Code eingeben");
-    joinLobby(code);
-};
-
-async function joinLobby(code) {
-    const lobbyRef = doc(db, "lobbies", code);
-    const lobbySnap = await getDoc(lobbyRef);
-
-    if (!lobbySnap.exists()) {
-        alert("Lobby existiert nicht!");
-        return;
+    if (data.gameStarted) {
+      hostLobby.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
     }
-
-    lobbyArea.classList.remove("hidden");
-    lobbyCodeEl.textContent = code;
-    currentLobby = code;
-
-    // Spieler hinzufügen
-    const player = await addDoc(collection(db, "players"), {
-        lobby: code,
-        name: "Spieler " + Math.floor(Math.random() * 1000)
-    });
-
-    currentPlayerId = player.id;
-
-    if (isHost) startGameBtn.classList.remove("hidden");
-
-    listenForPlayers(code);
-    listenForGameStart(code);
+  });
 }
 
-// Echtzeit: Spielerliste aktualisieren
-function listenForPlayers(code) {
-    const q = query(collection(db, "players"), where("lobby", "==", code));
 
-    onSnapshot(q, (snapshot) => {
-        playerListEl.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const li = document.createElement("li");
-            li.textContent = doc.data().name;
-            playerListEl.appendChild(li);
-        });
-    });
-}
-
-// HOST → Spiel starten
+// ----------------------------
+// HOST startet Spiel
+// ----------------------------
 startGameBtn.onclick = async () => {
-    await updateDoc(doc(db, "lobbies", currentLobby), {
-        started: true
-    });
+  await updateDoc(doc(db, "games", currentTeam), {
+    gameStarted: true
+  });
 };
 
-// Spieler hören, ob Spiel gestartet wurde
-function listenForGameStart(code) {
-    onSnapshot(doc(db, "lobbies", code), (snap) => {
-        const data = snap.data();
-        if (data.started) {
-            gameStatus.textContent = "Das Spiel startet jetzt!";
-        }
-    });
-}
+
+// ----------------------------
+// Spieler Upload
+// ----------------------------
+uploadBtn.onclick = async () => {
+  if (!uploadInput.files[0]) {
+    alert("Bitte ein Bild auswählen!");
+    return;
+  }
+
+  statusText.textContent = "Bild hochgeladen! (Backend Upload kannst du später ergänzen)";
+};
