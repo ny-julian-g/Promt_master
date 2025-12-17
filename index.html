@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bild Game</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <title>Bild Game</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-  <h1>Bild Ähnlichkeit Game</h1>
+<h1>Bild Ähnlichkeit Game</h1>
 
-  <!-- STARTSCREEN -->
-  <div id="startScreen">
+<!-- STARTSCREEN -->
+<div id="startScreen">
     <button id="createGameBtn">Spiel erstellen</button>
 
     <h3>Spiel beitreten</h3>
     <input id="usernameInput" placeholder="Name eingeben">
     <input id="joinCodeInput" placeholder="Teamcode eingeben">
     <button id="joinGameBtn">Beitreten</button>
-  </div>
+</div>
 
-  <!-- HOST LOBBY -->
-  <div id="hostLobby" class="hidden">
+<!-- HOST LOBBY -->
+<div id="hostLobby" class="hidden">
     <h2>Teamcode:</h2>
-    <div id="lobbyCode" class="codeBox"></div>
+    <div id="lobbyCode"></div>
 
     <h3>Spieler im Team:</h3>
     <ul id="lobbyPlayers"></ul>
 
     <button id="startRoundBtn">Runde starten</button>
-  </div>
+</div>
 
-  <!-- GAME SCREEN -->
-  <div id="gameScreen" class="hidden">
-    <h2>Runde läuft!</h2>
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="hidden">
+    <h2>Spiel läuft</h2>
     <p id="statusTxt"></p>
 
     <div id="uploadArea">
-      <input type="file" id="imageUpload">
-      <button id="uploadImageBtn">Bild hochladen</button>
+        <input type="file" id="imageUpload">
+        <button id="uploadImageBtn">Bild hochladen</button>
     </div>
 
     <button id="stopRoundBtn" class="hidden">Runde beenden</button>
-  </div>
+</div>
 
-  <!-- VOTING SCREEN -->
-  <div id="votingScreen" class="hidden">
+<!-- VOTING SCREEN -->
+<div id="votingScreen" class="hidden">
     <h2>Voting</h2>
     <div id="votingContainer"></div>
-  </div>
+</div>
 
-  <!-- RESULT SCREEN -->
-  <div id="resultScreen" class="hidden">
+<!-- RESULT SCREEN -->
+<div id="resultScreen" class="hidden">
     <h2>Ergebnis</h2>
     <h3 id="winnerName"></h3>
-    <img id="winnerImage" class="winnerImage" />
+    <img id="winnerImage" class="winnerImage">
 
     <h2>Alle Stimmen</h2>
     <table id="resultsTable"></table>
-  </div>
+</div>
 
-  <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="script.js"></script>
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="script.js"></script>
 
 </body>
 </html>
