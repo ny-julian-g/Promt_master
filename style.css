@@ -8,19 +8,25 @@ body {
   display: none;
 }
 
-input {
-  padding: 8px;
-  font-size: 16px;
-}
-
 button {
-  padding: 10px 20px;
+  padding: 12px 25px;
+  font-size: 18px;
   margin-top: 10px;
-  font-size: 16px;
+  cursor: pointer;
 }
 
-.bigCode {
-  font-size: 32px;
+input {
+  padding: 10px;
+  font-size: 16px;
+  margin-top: 5px;
+}
+
+.codeBox {
+  font-size: 50px;
   font-weight: bold;
-  margin: 15px 0;
+  background: #f3f3f3;
+  padding: 20px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 10px;
 }

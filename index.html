@@ -9,34 +9,33 @@
 <body>
   <h1>Bild Ähnlichkeit Game</h1>
 
-  <!-- HOST / JOIN UI -->
-  <div id="menu">
-    <button id="hostBtn">Spiel erstellen</button>
+  <!-- STARTSCREEN -->
+  <div id="startScreen">
+    <button id="createGameBtn">Spiel erstellen</button>
 
-    <h3>Oder Spiel beitreten</h3>
-    <input id="teamCodeInput" placeholder="Teamcode eingeben" />
-    <button id="joinBtn">Beitreten</button>
+    <h3>Spiel beitreten</h3>
+    <input id="joinCodeInput" placeholder="Teamcode eingeben">
+    <button id="joinGameBtn">Beitreten</button>
   </div>
 
   <!-- HOST LOBBY -->
   <div id="hostLobby" class="hidden">
     <h2>Teamcode:</h2>
-    <div id="hostCode" class="bigCode"></div>
+    <div id="lobbyCode" class="codeBox"></div>
 
     <h3>Spieler im Team:</h3>
-    <ul id="playerList"></ul>
+    <ul id="lobbyPlayers"></ul>
 
-    <button id="startGameBtn">Spiel starten</button>
+    <button id="startRoundBtn">Runde starten</button>
   </div>
 
-  <!-- GAME UI -->
+  <!-- GAME SCREEN -->
   <div id="gameScreen" class="hidden">
     <h2>Runde läuft!</h2>
-    <p>Bild hochladen:</p>
-    <input type="file" id="uploadInput" />
-    <button id="uploadBtn">Upload senden</button>
+    <p id="statusTxt"></p>
 
-    <p id="statusText"></p>
+    <input type="file" id="imageUpload">
+    <button id="uploadImageBtn">Bild hochladen</button>
   </div>
 
   <script type="module" src="firebase-config.js"></script>
