@@ -34,19 +34,25 @@ let playerName = "Player" + Math.floor(Math.random() * 9000);
 // HOST erstellt Team
 // ----------------------------
 hostBtn.onclick = async () => {
-  const code = Math.random().toString().substring(2, 7);
+  // 6-stelliger Teamcode: z.B. "483920"
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
 
   currentTeam = code;
 
+  // Neues Spiel-Dokument in Firestore erstellen
   await setDoc(doc(db, "games", code), {
     players: [],
     gameStarted: false
   });
 
+  // Menü ausblenden, Lobby anzeigen
   menu.classList.add("hidden");
   hostLobby.classList.remove("hidden");
+
+  // Code anzeigen
   hostCode.textContent = code;
 
+  // Listener starten, damit Spieler live angezeigt werden
   startPlayerListener(code);
 };
 
