@@ -8,7 +8,7 @@ import {
   arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// UI Elemente
+// UI ELEMENTE
 const createGameBtn = document.getElementById("createGameBtn");
 const joinGameBtn = document.getElementById("joinGameBtn");
 const joinCodeInput = document.getElementById("joinCodeInput");
@@ -31,6 +31,8 @@ const imagesContainer = document.getElementById("imagesContainer");
 let teamCode = null;
 let username = "Player" + Math.floor(Math.random() * 9000);
 
+let countdownIntervalRunning = false;
+
 // ==============================
 // HOST SPIEL ERSTELLEN
 // ==============================
@@ -40,7 +42,7 @@ createGameBtn.onclick = async () => {
   await setDoc(doc(db, "games", teamCode), {
     players: [],
     gameStarted: false,
-    countdown: 600, // 10 Minuten
+    countdown: 600,
     images: {},
     votingStarted: false
   });
@@ -49,7 +51,7 @@ createGameBtn.onclick = async () => {
   hostLobby.classList.remove("hidden");
   lobbyCode.textContent = teamCode;
 
-  startLobbyListener();
+  startGameListener();
 };
 
 // ==============================
@@ -72,41 +74,42 @@ joinGameBtn.onclick = async () => {
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   statusTxt.textContent = "Warte auf Host...";
+  startGameListener();
 };
 
 // ==============================
-// LOBBY LIVE-UPDATES
+// GLOBALER FIRESTORE LISTENER
 // ==============================
-function startLobbyListener() {
+function startGameListener() {
   const ref = doc(db, "games", teamCode);
 
   onSnapshot(ref, snap => {
     const data = snap.data();
+    if (!data) return;
 
-    // Spieler anzeigen
-    lobbyPlayers.innerHTML = "";
-    data.players.forEach(p => {
-      const li = document.createElement("li");
-      li.textContent = p;
-      lobbyPlayers.appendChild(li);
-    });
+    // LOBBY UPDATE
+    if (!data.gameStarted) {
+      lobbyPlayers.innerHTML = "";
+      data.players.forEach(p => {
+        const li = document.createElement("li");
+        li.textContent = p;
+        lobbyPlayers.appendChild(li);
+      });
+    }
 
-    if (data.gameStarted) {
+    // COUNTDOWN ANZEIGEN
+    if (data.gameStarted && !data.votingStarted) {
       hostLobby.classList.add("hidden");
       gameScreen.classList.remove("hidden");
 
       statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
 
+    // Voting starten
     if (data.votingStarted) {
       gameScreen.classList.add("hidden");
       votingScreen.classList.remove("hidden");
       renderImages(data.images);
-    }
-
-    // LIVE Countdown auch bei Spielern aktualisieren
-    if (data.gameStarted && !data.votingStarted) {
-      statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
   });
 }
@@ -115,19 +118,20 @@ function startLobbyListener() {
 // HOST STARTET RUNDE
 // ==============================
 startRoundBtn.onclick = async () => {
-  const ref = doc(db, "games", teamCode);
-
-  await updateDoc(ref, {
+  await updateDoc(doc(db, "games", teamCode), {
     gameStarted: true
   });
 
-  startCountdown();
+  startCountdownAsHost();
 };
 
 // ==============================
-// COUNTDOWN 10 MINUTEN
+// HOST STEUERT COUNTDOWN
 // ==============================
-function startCountdown() {
+async function startCountdownAsHost() {
+  if (countdownIntervalRunning) return;
+  countdownIntervalRunning = true;
+
   const interval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
     const snap = await getDoc(ref);
@@ -146,7 +150,7 @@ function startCountdown() {
 }
 
 // ==============================
-// BILD HOCHLADEN (BASE64)
+// BILD HOCHLADEN
 // ==============================
 uploadImageBtn.onclick = async () => {
   const file = imageUpload.files[0];
@@ -167,7 +171,7 @@ uploadImageBtn.onclick = async () => {
 };
 
 // ==============================
-// VOTING STARTEN
+// VOTING
 // ==============================
 async function startVoting() {
   await updateDoc(doc(db, "games", teamCode), {
