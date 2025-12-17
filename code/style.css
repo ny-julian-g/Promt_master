@@ -1,0 +1,10 @@
+body {
+  font-family: sans-serif;
+  padding: 20px;
+  text-align: center;
+}
+
+#gallery img {
+  width: 200px;
+  margin: 10px;
+}
