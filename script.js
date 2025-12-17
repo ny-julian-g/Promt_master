@@ -8,7 +8,9 @@ import {
   arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// UI ELEMENTE
+// UI Elemente
+const nameInput = document.getElementById("nameInput");
+
 const createGameBtn = document.getElementById("createGameBtn");
 const joinGameBtn = document.getElementById("joinGameBtn");
 const joinCodeInput = document.getElementById("joinCodeInput");
@@ -22,42 +24,52 @@ const startRoundBtn = document.getElementById("startRoundBtn");
 const gameScreen = document.getElementById("gameScreen");
 const statusTxt = document.getElementById("statusTxt");
 
+const uploadArea = document.getElementById("uploadArea");
 const imageUpload = document.getElementById("imageUpload");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 
-const votingScreen = document.getElementById("votingScreen");
-const imagesContainer = document.getElementById("imagesContainer");
+const allImages = document.getElementById("allImages");
 
 let teamCode = null;
-let username = "Player" + Math.floor(Math.random() * 9000);
-
-let countdownIntervalRunning = false;
+let username = null;
+let isHost = false;
 
 // ==============================
 // HOST SPIEL ERSTELLEN
 // ==============================
 createGameBtn.onclick = async () => {
+  if (nameInput.value.trim() === "")
+    return alert("Bitte gib einen Namen ein!");
+
+  username = nameInput.value.trim();
+  isHost = true;
+
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   await setDoc(doc(db, "games", teamCode), {
-    players: [],
+    players: [username],
     gameStarted: false,
     countdown: 600,
     images: {},
-    votingStarted: false
   });
 
   startScreen.classList.add("hidden");
   hostLobby.classList.remove("hidden");
   lobbyCode.textContent = teamCode;
 
-  startGameListener();
+  startLobbyListener();
 };
 
 // ==============================
 // SPIEL BEITRETEN
 // ==============================
 joinGameBtn.onclick = async () => {
+  if (nameInput.value.trim() === "")
+    return alert("Bitte gib einen Namen ein!");
+
+  username = nameInput.value.trim();
+  isHost = false;
+
   const code = joinCodeInput.value.trim();
   if (!/^\d{6}$/.test(code)) return alert("6-stelligen Code eingeben!");
 
@@ -74,42 +86,43 @@ joinGameBtn.onclick = async () => {
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   statusTxt.textContent = "Warte auf Host...";
-  startGameListener();
 };
 
 // ==============================
-// GLOBALER FIRESTORE LISTENER
+// LOBBY LISTENER
 // ==============================
-function startGameListener() {
+function startLobbyListener() {
   const ref = doc(db, "games", teamCode);
 
   onSnapshot(ref, snap => {
     const data = snap.data();
-    if (!data) return;
 
-    // LOBBY UPDATE
-    if (!data.gameStarted) {
-      lobbyPlayers.innerHTML = "";
-      data.players.forEach(p => {
-        const li = document.createElement("li");
-        li.textContent = p;
-        lobbyPlayers.appendChild(li);
-      });
-    }
+    // Spieler anzeigen
+    lobbyPlayers.innerHTML = "";
+    data.players.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = p;
+      lobbyPlayers.appendChild(li);
+    });
 
-    // COUNTDOWN ANZEIGEN
-    if (data.gameStarted && !data.votingStarted) {
+    // Spiel startet → zum Game Screen
+    if (data.gameStarted) {
       hostLobby.classList.add("hidden");
       gameScreen.classList.remove("hidden");
 
       statusTxt.textContent = `Countdown: ${data.countdown}s`;
+
+      // HOST darf kein Bild hochladen
+      if (isHost) uploadArea.classList.add("hidden");
+      else uploadArea.classList.remove("hidden");
     }
 
-    // Voting starten
-    if (data.votingStarted) {
-      gameScreen.classList.add("hidden");
-      votingScreen.classList.remove("hidden");
-      renderImages(data.images);
+    // Bilder live anzeigen
+    renderImages(data.images);
+
+    // Countdown Updaten
+    if (data.gameStarted) {
+      statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
   });
 }
@@ -122,16 +135,13 @@ startRoundBtn.onclick = async () => {
     gameStarted: true
   });
 
-  startCountdownAsHost();
+  startCountdown();
 };
 
 // ==============================
-// HOST STEUERT COUNTDOWN
+// COUNTDOWN LOGIK
 // ==============================
-async function startCountdownAsHost() {
-  if (countdownIntervalRunning) return;
-  countdownIntervalRunning = true;
-
+function startCountdown() {
   const interval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
     const snap = await getDoc(ref);
@@ -139,7 +149,6 @@ async function startCountdownAsHost() {
 
     if (data.countdown <= 0) {
       clearInterval(interval);
-      startVoting();
       return;
     }
 
@@ -171,19 +180,10 @@ uploadImageBtn.onclick = async () => {
 };
 
 // ==============================
-// VOTING
-// ==============================
-async function startVoting() {
-  await updateDoc(doc(db, "games", teamCode), {
-    votingStarted: true
-  });
-}
-
-// ==============================
 // BILDER ANZEIGEN
 // ==============================
 function renderImages(images) {
-  imagesContainer.innerHTML = "";
+  allImages.innerHTML = "";
 
   Object.entries(images).forEach(([player, img]) => {
     const div = document.createElement("div");
@@ -194,6 +194,6 @@ function renderImages(images) {
       <img src="${img}" />
     `;
 
-    imagesContainer.appendChild(div);
+    allImages.appendChild(div);
   });
 }
