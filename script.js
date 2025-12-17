@@ -20,7 +20,7 @@ const lobbyCode = document.getElementById("lobbyCode");
 const lobbyPlayers = document.getElementById("lobbyPlayers");
 
 const startRoundBtn = document.getElementById("startRoundBtn");
-const finishRoundBtn = document.getElementById("finishRoundBtn");
+const stopRoundBtn = document.getElementById("stopRoundBtn");
 
 const gameScreen = document.getElementById("gameScreen");
 const statusTxt = document.getElementById("statusTxt");
@@ -32,19 +32,16 @@ const uploadArea = document.getElementById("uploadArea");
 const votingScreen = document.getElementById("votingScreen");
 const imagesContainer = document.getElementById("imagesContainer");
 
-const hostResults = document.getElementById("hostResults");
-const winnerImage = document.getElementById("winnerImage");
-
 let teamCode = null;
 let username = null;
 let isHost = false;
 
-// ===================================================
+// ==============================
 // HOST SPIEL ERSTELLEN
-// ===================================================
+// ==============================
 createGameBtn.onclick = async () => {
   isHost = true;
-  username = "Host";
+  username = "Host"; // Host lädt nichts hoch
 
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -53,9 +50,7 @@ createGameBtn.onclick = async () => {
     gameStarted: false,
     countdown: 600,
     images: {},
-    votes: {},
-    votingStarted: false,
-    winner: null
+    votingStarted: false
   });
 
   startScreen.classList.add("hidden");
@@ -65,9 +60,9 @@ createGameBtn.onclick = async () => {
   startLobbyListener();
 };
 
-// ===================================================
+// ==============================
 // SPIEL BEITRETEN
-// ===================================================
+// ==============================
 joinGameBtn.onclick = async () => {
   const code = joinCodeInput.value.trim();
   username = usernameInput.value.trim();
@@ -90,9 +85,9 @@ joinGameBtn.onclick = async () => {
   startGameListener();
 };
 
-// ===================================================
-// HOST LOBBY LISTENER
-// ===================================================
+// ==============================
+// HOST: LOBBY LISTENER
+// ==============================
 function startLobbyListener() {
   const ref = doc(db, "games", teamCode);
 
@@ -114,9 +109,9 @@ function startLobbyListener() {
   });
 }
 
-// ===================================================
-// SPIEL LIVE-UPDATES
-// ===================================================
+// ==============================
+// GAME LISTENER
+// ==============================
 function startGameListener() {
   const ref = doc(db, "games", teamCode);
 
@@ -125,44 +120,54 @@ function startGameListener() {
 
     statusTxt.textContent = `Countdown: ${data.countdown}s`;
 
-    if (isHost) uploadArea.classList.add("hidden");
-    else uploadArea.classList.remove("hidden");
+    if (isHost) {
+      uploadArea.classList.add("hidden");
+      stopRoundBtn.classList.remove("hidden");
+    } else {
+      uploadArea.classList.remove("hidden");
+      stopRoundBtn.classList.add("hidden");
+    }
 
     if (data.votingStarted) {
       gameScreen.classList.add("hidden");
       votingScreen.classList.remove("hidden");
-      renderImages(data.images, data.votes);
-
-      if (isHost) showHostResults(data);
+      renderImages(data.images);
     }
   });
 }
 
-// ===================================================
-// HOST: COUNTDOWN / RUNDE STARTEN
-// ===================================================
+// ==============================
+// HOST STARTET COUNTDOWN
+// ==============================
 startRoundBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", teamCode), {
-    gameStarted: true
-  });
+  const ref = doc(db, "games", teamCode);
+  await updateDoc(ref, { gameStarted: true });
+
   startCountdown();
 };
 
-// ===================================================
-// HOST: RUNDE MANUELL BEENDEN
-// ===================================================
-finishRoundBtn.onclick = async () => {
-  startVoting();
+// ==============================
+// STOP-BUTTON – host beendet Runde
+// ==============================
+stopRoundBtn.onclick = async () => {
+  await updateDoc(doc(db, "games", teamCode), {
+    votingStarted: true
+  });
 };
 
-// ===================================================
-// COUNTDOWN SYSTEM
-// ===================================================
+// ==============================
+// COUNTDOWN (läuft nur beim Host)
+// ==============================
 function startCountdown() {
   const interval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
     const snap = await getDoc(ref);
     const data = snap.data();
+
+    if (data.votingStarted) {
+      clearInterval(interval);
+      return;
+    }
 
     if (data.countdown <= 0) {
       clearInterval(interval);
@@ -174,108 +179,30 @@ function startCountdown() {
   }, 1000);
 }
 
-// ===================================================
-// BILD HOCHLADEN
-// ===================================================
-uploadImageBtn.onclick = async () => {
-  if (isHost) return;
-
-  const file = imageUpload.files[0];
-  if (!file) return alert("Bitte ein Bild auswählen!");
-
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result;
-
-    await updateDoc(doc(db, "games", teamCode), {
-      [`images.${username}`]: base64
-    });
-
-    alert("Bild hochgeladen!");
-  };
-
-  reader.readAsDataURL(file);
-};
-
-// ===================================================
-// VOTING STARTEN
-// ===================================================
+// ==============================
+// VOTING START
+// ==============================
 async function startVoting() {
   await updateDoc(doc(db, "games", teamCode), {
     votingStarted: true
   });
 }
 
-// ===================================================
-// BILDER RENDERN + VOTE BUTTONS
-// ===================================================
-function renderImages(images, votes) {
+// ==============================
+// BILDER RENDERN
+// ==============================
+function renderImages(images) {
   imagesContainer.innerHTML = "";
 
   Object.entries(images).forEach(([player, img]) => {
-    if (player === "Host") return; // Host kein Bild
-
     const div = document.createElement("div");
     div.classList.add("imgBox");
 
-    const alreadyVoted = votes && votes[username];
-
     div.innerHTML = `
       <h3>${player}</h3>
-      <img src="${img}"/>
-      ${
-        alreadyVoted
-          ? ""
-          : `<button class="voteBtn" data-player="${player}">Vote</button>`
-      }
+      <img src="${img}" />
     `;
 
     imagesContainer.appendChild(div);
   });
-
-  document.querySelectorAll(".voteBtn").forEach(btn => {
-    btn.onclick = async () => {
-      const chosen = btn.dataset.player;
-
-      await updateDoc(doc(db, "games", teamCode), {
-        [`votes.${username}`]: chosen
-      });
-
-      alert(`Du hast für ${chosen} gestimmt!`);
-    };
-  });
-}
-
-// ===================================================
-// HOST: ZEIGE ERGEBNISSE & GEWINNER
-// ===================================================
-function showHostResults(gameData) {
-  hostResults.innerHTML = "<h2>Ergebnisse</h2>";
-
-  const voteCounts = {};
-
-  Object.values(gameData.votes).forEach(v => {
-    voteCounts[v] = (voteCounts[v] || 0) + 1;
-  });
-
-  let winner = null;
-  let maxVotes = -1;
-
-  Object.entries(voteCounts).forEach(([player, count]) => {
-    const p = document.createElement("p");
-    p.textContent = `${player}: ${count} Stimmen`;
-    hostResults.appendChild(p);
-
-    if (count > maxVotes) {
-      maxVotes = count;
-      winner = player;
-    }
-  });
-
-  if (winner) {
-    winnerImage.innerHTML = `
-      <h2>Gewinner: ${winner}</h2>
-      <img src="${gameData.images[winner]}"/>
-    `;
-  }
 }

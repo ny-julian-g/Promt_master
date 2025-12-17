@@ -29,13 +29,15 @@
     <ul id="lobbyPlayers"></ul>
 
     <button id="startRoundBtn">Runde starten</button>
-    <button id="finishRoundBtn">Runde beenden</button>
   </div>
 
   <!-- GAME SCREEN -->
   <div id="gameScreen" class="hidden">
     <h2>Runde läuft!</h2>
     <p id="statusTxt"></p>
+
+    <!-- Stop Button für Host -->
+    <button id="stopRoundBtn" class="hidden">Runde beenden</button>
 
     <div id="uploadArea">
       <input type="file" id="imageUpload">
@@ -46,14 +48,7 @@
   <!-- VOTING SCREEN -->
   <div id="votingScreen" class="hidden">
     <h2>Voting</h2>
-    <p>Wähle das beste Bild!</p>
     <div id="imagesContainer"></div>
-  </div>
-
-  <!-- ADMIN RESULT SCREEN -->
-  <div id="adminResults" class="hidden">
-    <h2>Voting Ergebnisse</h2>
-    <div id="resultContainer"></div>
   </div>
 
   <script type="module" src="firebase-config.js"></script>
