@@ -27,6 +27,8 @@ const imageUpload = document.getElementById("imageUpload");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 const uploadArea = document.getElementById("uploadArea");
 
+const finishBtn = document.getElementById("finishBtn");
+
 const votingScreen = document.getElementById("votingScreen");
 const imagesContainer = document.getElementById("imagesContainer");
 
@@ -39,7 +41,7 @@ let isHost = false;
 // ==============================
 createGameBtn.onclick = async () => {
   isHost = true;
-  username = "Host";
+  username = "Host"; // Host lädt kein Bild hoch
 
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -78,9 +80,6 @@ joinGameBtn.onclick = async () => {
   await updateDoc(ref, { players: arrayUnion(username) });
 
   startScreen.classList.add("hidden");
-
-  // Spieler wartet auf Start
-  statusTxt.textContent = "Warten auf die Runde...";
   gameScreen.classList.remove("hidden");
 
   startGameListener();
@@ -95,6 +94,7 @@ function startLobbyListener() {
   onSnapshot(ref, snap => {
     const data = snap.data();
 
+    // Spielerliste aktualisieren
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -111,19 +111,22 @@ function startLobbyListener() {
 }
 
 // ==============================
-// GAME LISTENER
+// GAME LISTENER – Synced bei allen
 // ==============================
 function startGameListener() {
   const ref = doc(db, "games", teamCode);
 
   onSnapshot(ref, snap => {
     const data = snap.data();
-    if (!data) return;
 
     statusTxt.textContent = `Countdown: ${data.countdown}s`;
 
+    // Host hat keinen Uploadbereich
     if (isHost) uploadArea.classList.add("hidden");
     else uploadArea.classList.remove("hidden");
+
+    // Fertig Button nur für Host
+    if (isHost) finishBtn.classList.remove("hidden");
 
     if (data.votingStarted) {
       gameScreen.classList.add("hidden");
@@ -134,23 +137,35 @@ function startGameListener() {
 }
 
 // ==============================
-// HOST STARTET COUNTDOWN
+// HOST STARTET RUNDE
 // ==============================
 startRoundBtn.onclick = async () => {
-  const ref = doc(db, "games", teamCode);
-  await updateDoc(ref, { gameStarted: true });
+  await updateDoc(doc(db, "games", teamCode), {
+    gameStarted: true
+  });
 
   startCountdown();
 };
 
 // ==============================
-// COUNTDOWN SYSTEM
+// HOST beendet Runde frühzeitig
+// ==============================
+finishBtn.onclick = async () => {
+  await updateDoc(doc(db, "games", teamCode), {
+    votingStarted: true
+  });
+};
+
+// ==============================
+// COUNTDOWN (läuft nur auf Host-Seite)
 // ==============================
 function startCountdown() {
   const interval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
     const snap = await getDoc(ref);
     const data = snap.data();
+
+    if (!data.gameStarted) return;
 
     if (data.countdown <= 0) {
       clearInterval(interval);
@@ -163,13 +178,13 @@ function startCountdown() {
 }
 
 // ==============================
-// BILD HOCHLADEN
+// Bild Upload
 // ==============================
 uploadImageBtn.onclick = async () => {
   if (isHost) return;
 
   const file = imageUpload.files[0];
-  if (!file) return alert("Bitte ein Bild auswählen!");
+  if (!file) return alert("Bitte Bild auswählen!");
 
   const reader = new FileReader();
   reader.onload = async () => {
@@ -178,12 +193,11 @@ uploadImageBtn.onclick = async () => {
     });
     alert("Bild hochgeladen!");
   };
-
   reader.readAsDataURL(file);
 };
 
 // ==============================
-// VOTING STARTEN
+// Voting starten
 // ==============================
 async function startVoting() {
   await updateDoc(doc(db, "games", teamCode), {
@@ -192,20 +206,19 @@ async function startVoting() {
 }
 
 // ==============================
-// BILDER RENDERN
+// Bilder anzeigen
 // ==============================
 function renderImages(images) {
   imagesContainer.innerHTML = "";
 
-  Object.entries(images).forEach(([player, img]) => {
+  Object.entries(images).forEach(([name, img]) => {
     const div = document.createElement("div");
     div.classList.add("imgBox");
 
     div.innerHTML = `
-      <h3>${player}</h3>
-      <img src="${img}" />
+      <h3>${name}</h3>
+      <img src="${img}">
     `;
-
     imagesContainer.appendChild(div);
   });
 }
