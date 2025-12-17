@@ -39,7 +39,7 @@ let isHost = false;
 // ==============================
 createGameBtn.onclick = async () => {
   isHost = true;
-  username = "Host"; // Host lädt kein Bild hoch
+  username = "Host";
 
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -78,6 +78,9 @@ joinGameBtn.onclick = async () => {
   await updateDoc(ref, { players: arrayUnion(username) });
 
   startScreen.classList.add("hidden");
+
+  // Spieler wartet auf Start
+  statusTxt.textContent = "Warten auf die Runde...";
   gameScreen.classList.remove("hidden");
 
   startGameListener();
@@ -92,7 +95,6 @@ function startLobbyListener() {
   onSnapshot(ref, snap => {
     const data = snap.data();
 
-    // Spielerliste aktualisieren
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -109,13 +111,14 @@ function startLobbyListener() {
 }
 
 // ==============================
-// GAME LISTENER – ALLEN ANZEIGEN
+// GAME LISTENER
 // ==============================
 function startGameListener() {
   const ref = doc(db, "games", teamCode);
 
   onSnapshot(ref, snap => {
     const data = snap.data();
+    if (!data) return;
 
     statusTxt.textContent = `Countdown: ${data.countdown}s`;
 
@@ -131,7 +134,7 @@ function startGameListener() {
 }
 
 // ==============================
-// HOST STARTET DEN COUNTDOWN
+// HOST STARTET COUNTDOWN
 // ==============================
 startRoundBtn.onclick = async () => {
   const ref = doc(db, "games", teamCode);
@@ -163,19 +166,16 @@ function startCountdown() {
 // BILD HOCHLADEN
 // ==============================
 uploadImageBtn.onclick = async () => {
-  if (isHost) return; // Host lädt nichts hoch
+  if (isHost) return;
 
   const file = imageUpload.files[0];
   if (!file) return alert("Bitte ein Bild auswählen!");
 
   const reader = new FileReader();
   reader.onload = async () => {
-    const base64 = reader.result;
-
     await updateDoc(doc(db, "games", teamCode), {
-      [`images.${username}`]: base64
+      [`images.${username}`]: reader.result
     });
-
     alert("Bild hochgeladen!");
   };
 
