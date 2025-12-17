@@ -20,10 +20,10 @@ const lobbyCode = document.getElementById("lobbyCode");
 const lobbyPlayers = document.getElementById("lobbyPlayers");
 
 const startRoundBtn = document.getElementById("startRoundBtn");
-const stopRoundBtn = document.getElementById("stopRoundBtn");
-
 const gameScreen = document.getElementById("gameScreen");
 const statusTxt = document.getElementById("statusTxt");
+
+const stopRoundBtn = document.getElementById("stopRoundBtn");
 
 const imageUpload = document.getElementById("imageUpload");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
@@ -35,13 +35,14 @@ const imagesContainer = document.getElementById("imagesContainer");
 let teamCode = null;
 let username = null;
 let isHost = false;
+let countdownInterval = null;
 
 // ==============================
 // HOST SPIEL ERSTELLEN
 // ==============================
 createGameBtn.onclick = async () => {
   isHost = true;
-  username = "Host"; // Host lädt nichts hoch
+  username = "Host"; // Host lädt kein Bild hoch
 
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -124,8 +125,8 @@ function startGameListener() {
       uploadArea.classList.add("hidden");
       stopRoundBtn.classList.remove("hidden");
     } else {
-      uploadArea.classList.remove("hidden");
       stopRoundBtn.classList.add("hidden");
+      uploadArea.classList.remove("hidden");
     }
 
     if (data.votingStarted) {
@@ -137,40 +138,32 @@ function startGameListener() {
 }
 
 // ==============================
-// HOST STARTET COUNTDOWN
+// HOST STARTET RUNDEN
 // ==============================
 startRoundBtn.onclick = async () => {
-  const ref = doc(db, "games", teamCode);
-  await updateDoc(ref, { gameStarted: true });
-
+  await updateDoc(doc(db, "games", teamCode), { gameStarted: true });
   startCountdown();
 };
 
 // ==============================
-// STOP-BUTTON – host beendet Runde
+// STOP BUTTON
 // ==============================
 stopRoundBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", teamCode), {
-    votingStarted: true
-  });
+  await updateDoc(doc(db, "games", teamCode), { countdown: 0 });
+  await startVoting();
 };
 
 // ==============================
-// COUNTDOWN (läuft nur beim Host)
+// COUNTDOWN
 // ==============================
 function startCountdown() {
-  const interval = setInterval(async () => {
+  countdownInterval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
     const snap = await getDoc(ref);
     const data = snap.data();
 
-    if (data.votingStarted) {
-      clearInterval(interval);
-      return;
-    }
-
     if (data.countdown <= 0) {
-      clearInterval(interval);
+      clearInterval(countdownInterval);
       startVoting();
       return;
     }
@@ -180,7 +173,28 @@ function startCountdown() {
 }
 
 // ==============================
-// VOTING START
+// BILD HOCHLADEN
+// ==============================
+uploadImageBtn.onclick = async () => {
+  if (isHost) return;
+
+  const file = imageUpload.files[0];
+  if (!file) return alert("Bitte ein Bild auswählen!");
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    await updateDoc(doc(db, "games", teamCode), {
+      [`images.${username}`]: reader.result
+    });
+
+    alert("Bild hochgeladen!");
+  };
+
+  reader.readAsDataURL(file);
+};
+
+// ==============================
+// VOTING STARTEN
 // ==============================
 async function startVoting() {
   await updateDoc(doc(db, "games", teamCode), {
