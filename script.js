@@ -1,5 +1,4 @@
 import { db } from "./firebase-config.js";
-
 import {
   doc,
   setDoc,
@@ -23,6 +22,10 @@ const startRoundBtn = document.getElementById("startRoundBtn");
 const gameScreen = document.getElementById("gameScreen");
 const statusTxt = document.getElementById("statusTxt");
 
+const uploadImageBtn = document.getElementById("uploadImageBtn");
+const imageUpload = document.getElementById("imageUpload");
+const allImagesBox = document.getElementById("allImages");
+
 let teamCode = null;
 let username = "Player" + Math.floor(Math.random() * 9000);
 
@@ -32,7 +35,8 @@ createGameBtn.onclick = async () => {
 
   await setDoc(doc(db, "games", teamCode), {
     players: [],
-    gameStarted: false
+    gameStarted: false,
+    images: []  // neu!
   });
 
   startScreen.classList.add("hidden");
@@ -45,7 +49,6 @@ createGameBtn.onclick = async () => {
 // Spieler tritt Spiel bei
 joinGameBtn.onclick = async () => {
   const code = joinCodeInput.value.trim();
-
   if (!/^\d{6}$/.test(code)) return alert("6-stelligen Code eingeben!");
 
   const ref = doc(db, "games", code);
@@ -71,6 +74,7 @@ function startLobbyListener() {
   onSnapshot(ref, snap => {
     const data = snap.data();
 
+    // Spieler anzeigen
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -78,11 +82,21 @@ function startLobbyListener() {
       lobbyPlayers.appendChild(li);
     });
 
+    // Startsignal
     if (data.gameStarted) {
       hostLobby.classList.add("hidden");
       gameScreen.classList.remove("hidden");
       statusTxt.textContent = "Runde gestartet!";
     }
+
+    // Bilder anzeigen
+    allImagesBox.innerHTML = "";
+    data.images.forEach(img => {
+      const el = document.createElement("img");
+      el.src = img.base64;
+      el.className = "previewImg";
+      allImagesBox.appendChild(el);
+    });
   });
 }
 
@@ -91,4 +105,26 @@ startRoundBtn.onclick = async () => {
   await updateDoc(doc(db, "games", teamCode), {
     gameStarted: true
   });
+};
+
+// Bild hochladen → in Base64 umwandeln → Firestore speichern
+uploadImageBtn.onclick = async () => {
+  if (!imageUpload.files[0]) return alert("Bitte ein Bild auswählen!");
+
+  const reader = new FileReader();
+
+  reader.onload = async () => {
+    const base64 = reader.result;
+
+    await updateDoc(doc(db, "games", teamCode), {
+      images: arrayUnion({
+        user: username,
+        base64: base64
+      })
+    });
+
+    alert("Bild hochgeladen!");
+  };
+
+  reader.readAsDataURL(imageUpload.files[0]);
 };
