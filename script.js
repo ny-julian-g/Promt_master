@@ -9,11 +9,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // UI Elemente
-const nameInput = document.getElementById("nameInput");
-
 const createGameBtn = document.getElementById("createGameBtn");
 const joinGameBtn = document.getElementById("joinGameBtn");
 const joinCodeInput = document.getElementById("joinCodeInput");
+const usernameInput = document.getElementById("usernameInput");
 
 const startScreen = document.getElementById("startScreen");
 const hostLobby = document.getElementById("hostLobby");
@@ -22,35 +21,30 @@ const lobbyPlayers = document.getElementById("lobbyPlayers");
 
 const startRoundBtn = document.getElementById("startRoundBtn");
 const gameScreen = document.getElementById("gameScreen");
-const statusTxt = document.getElementById("statusTxt");
 
-const uploadArea = document.getElementById("uploadArea");
+const uploadSection = document.getElementById("uploadSection");
 const imageUpload = document.getElementById("imageUpload");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
 
-const allImages = document.getElementById("allImages");
+const statusTxt = document.getElementById("statusTxt");
 
 let teamCode = null;
 let username = null;
 let isHost = false;
 
-// ==============================
+// =====================================
 // HOST SPIEL ERSTELLEN
-// ==============================
+// =====================================
 createGameBtn.onclick = async () => {
-  if (nameInput.value.trim() === "")
-    return alert("Bitte gib einen Namen ein!");
-
-  username = nameInput.value.trim();
   isHost = true;
-
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   await setDoc(doc(db, "games", teamCode), {
-    players: [username],
+    players: [],
     gameStarted: false,
     countdown: 600,
     images: {},
+    votingStarted: false
   });
 
   startScreen.classList.add("hidden");
@@ -60,37 +54,40 @@ createGameBtn.onclick = async () => {
   startLobbyListener();
 };
 
-// ==============================
+// =====================================
 // SPIEL BEITRETEN
-// ==============================
+// =====================================
 joinGameBtn.onclick = async () => {
-  if (nameInput.value.trim() === "")
-    return alert("Bitte gib einen Namen ein!");
-
-  username = nameInput.value.trim();
-  isHost = false;
-
   const code = joinCodeInput.value.trim();
+  username = usernameInput.value.trim();
+
+  if (!username) return alert("Bitte gib einen Namen ein!");
   if (!/^\d{6}$/.test(code)) return alert("6-stelligen Code eingeben!");
 
   const ref = doc(db, "games", code);
   const snap = await getDoc(ref);
-  if (!snap.exists()) return alert("Team existiert nicht!");
+  if (!snap.exists()) return alert("Dieses Team existiert nicht!");
 
   teamCode = code;
 
+  // Spieler hinzufügen
   await updateDoc(ref, {
     players: arrayUnion(username)
   });
 
+  isHost = false;
+
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  statusTxt.textContent = "Warte auf Host...";
+  statusTxt.textContent = "Warte auf den Host...";
+
+  // Host sieht alle, Spieler nicht
+  uploadSection.style.display = "block";
 };
 
-// ==============================
-// LOBBY LISTENER
-// ==============================
+// =====================================
+// LIVE-LOBBY-UPDATES
+// =====================================
 function startLobbyListener() {
   const ref = doc(db, "games", teamCode);
 
@@ -105,31 +102,22 @@ function startLobbyListener() {
       lobbyPlayers.appendChild(li);
     });
 
-    // Spiel startet → zum Game Screen
+    // Countdown startet → Host und Spieler wechseln Screen
     if (data.gameStarted) {
-      hostLobby.classList.add("hidden");
-      gameScreen.classList.remove("hidden");
+      if (isHost) {
+        hostLobby.classList.add("hidden");
+        gameScreen.classList.remove("hidden");
+        uploadSection.style.display = "none"; // Host lädt NICHT hoch
+      }
 
-      statusTxt.textContent = `Countdown: ${data.countdown}s`;
-
-      // HOST darf kein Bild hochladen
-      if (isHost) uploadArea.classList.add("hidden");
-      else uploadArea.classList.remove("hidden");
-    }
-
-    // Bilder live anzeigen
-    renderImages(data.images);
-
-    // Countdown Updaten
-    if (data.gameStarted) {
       statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
   });
 }
 
-// ==============================
+// =====================================
 // HOST STARTET RUNDE
-// ==============================
+// =====================================
 startRoundBtn.onclick = async () => {
   await updateDoc(doc(db, "games", teamCode), {
     gameStarted: true
@@ -138,9 +126,9 @@ startRoundBtn.onclick = async () => {
   startCountdown();
 };
 
-// ==============================
-// COUNTDOWN LOGIK
-// ==============================
+// =====================================
+// 10-MINUTEN COUNTDOWN
+// =====================================
 function startCountdown() {
   const interval = setInterval(async () => {
     const ref = doc(db, "games", teamCode);
@@ -155,15 +143,18 @@ function startCountdown() {
     await updateDoc(ref, {
       countdown: data.countdown - 1
     });
+
   }, 1000);
 }
 
-// ==============================
-// BILD HOCHLADEN
-// ==============================
+// =====================================
+// BILD UPLOAD (nur Spieler)
+// =====================================
 uploadImageBtn.onclick = async () => {
+  if (isHost) return; // Host darf NICHT hochladen
+
   const file = imageUpload.files[0];
-  if (!file) return alert("Bitte ein Bild auswählen!");
+  if (!file) return alert("Wähle ein Bild!");
 
   const reader = new FileReader();
   reader.onload = async () => {
@@ -178,22 +169,3 @@ uploadImageBtn.onclick = async () => {
 
   reader.readAsDataURL(file);
 };
-
-// ==============================
-// BILDER ANZEIGEN
-// ==============================
-function renderImages(images) {
-  allImages.innerHTML = "";
-
-  Object.entries(images).forEach(([player, img]) => {
-    const div = document.createElement("div");
-    div.classList.add("imgBox");
-
-    div.innerHTML = `
-      <h3>${player}</h3>
-      <img src="${img}" />
-    `;
-
-    allImages.appendChild(div);
-  });
-}
