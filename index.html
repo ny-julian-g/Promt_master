@@ -36,7 +36,7 @@
     <h2>Runde läuft!</h2>
     <p id="statusTxt"></p>
 
-    <!-- Host STOP BUTTON -->
+    <!-- STOP BUTTON FÜR HOST -->
     <button id="stopRoundBtn" class="hidden">Runde beenden</button>
 
     <div id="uploadArea">
@@ -48,7 +48,21 @@
   <!-- VOTING SCREEN -->
   <div id="votingScreen" class="hidden">
     <h2>Voting</h2>
+    <p>Wähle das beste Bild aus:</p>
+
     <div id="imagesContainer"></div>
+
+    <p id="voteStatus" class="hidden">Du hast bereits abgestimmt</p>
+  </div>
+
+  <!-- RESULT SCREEN (nur Host) -->
+  <div id="resultScreen" class="hidden">
+    <h2>Ergebnis</h2>
+    <h3 id="winnerName"></h3>
+    <img id="winnerImage" class="winnerImg">
+
+    <h3>Alle Stimmen:</h3>
+    <ul id="voteList"></ul>
   </div>
 
   <script type="module" src="firebase-config.js"></script>
