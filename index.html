@@ -36,33 +36,25 @@
     <h2>Runde läuft!</h2>
     <p id="statusTxt"></p>
 
-    <!-- STOP BUTTON FÜR HOST -->
-    <button id="stopRoundBtn" class="hidden">Runde beenden</button>
-
     <div id="uploadArea">
       <input type="file" id="imageUpload">
       <button id="uploadImageBtn">Bild hochladen</button>
     </div>
+
+    <button id="stopRoundBtn" class="hidden">Runde beenden</button>
   </div>
 
   <!-- VOTING SCREEN -->
   <div id="votingScreen" class="hidden">
     <h2>Voting</h2>
-    <p>Wähle das beste Bild aus:</p>
-
     <div id="imagesContainer"></div>
-
-    <p id="voteStatus" class="hidden">Du hast bereits abgestimmt</p>
   </div>
 
-  <!-- RESULT SCREEN (nur Host) -->
+  <!-- RESULT SCREEN -->
   <div id="resultScreen" class="hidden">
     <h2>Ergebnis</h2>
-    <h3 id="winnerName"></h3>
-    <img id="winnerImage" class="winnerImg">
-
-    <h3>Alle Stimmen:</h3>
-    <ul id="voteList"></ul>
+    <p id="winnerText"></p>
+    <img id="winnerImage" />
   </div>
 
   <script type="module" src="firebase-config.js"></script>
