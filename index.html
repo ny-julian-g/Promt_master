@@ -2,19 +2,25 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Bild Game</title>
+  <title>Bild Ähnlichkeit Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <h1>Bild Ähnlichkeit Game</h1>
 
+  <!-- NAMEN EINGEBEN -->
+  <div id="nameScreen">
+    <h3>Dein Name:</h3>
+    <input id="nameInput" placeholder="Name eingeben">
+    <button id="saveNameBtn">Weiter</button>
+  </div>
+
   <!-- STARTSCREEN -->
-  <div id="startScreen">
+  <div id="startScreen" class="hidden">
     <button id="createGameBtn">Spiel erstellen</button>
 
     <h3>Spiel beitreten</h3>
-    <input id="usernameInput" placeholder="Dein Name">
     <input id="joinCodeInput" placeholder="Teamcode eingeben">
     <button id="joinGameBtn">Beitreten</button>
   </div>
@@ -27,18 +33,33 @@
     <h3>Spieler im Team:</h3>
     <ul id="lobbyPlayers"></ul>
 
+    <h3>Original Bild hochladen</h3>
+    <input type="file" id="originalUpload">
+    <button id="uploadOriginalBtn">Original hochladen</button>
+
     <button id="startRoundBtn">Runde starten</button>
   </div>
 
-  <!-- GAME SCREEN (NUR SPIELER) -->
+  <!-- GAME SCREEN -->
   <div id="gameScreen" class="hidden">
     <h2>Runde läuft!</h2>
     <p id="statusTxt"></p>
 
-    <div id="uploadSection">
+    <div id="uploadArea">
       <input type="file" id="imageUpload">
       <button id="uploadImageBtn">Bild hochladen</button>
     </div>
+  </div>
+
+  <!-- VOTING SCREEN -->
+  <div id="votingScreen" class="hidden">
+    <h2>Voting</h2>
+
+    <h3>Original</h3>
+    <div id="originalBox"></div>
+
+    <h3>Einsendungen</h3>
+    <div id="votingImages"></div>
   </div>
 
   <script type="module" src="firebase-config.js"></script>
