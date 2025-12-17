@@ -71,7 +71,7 @@ joinGameBtn.onclick = async () => {
 
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  statusTxt.textContent = "Warte auf Host (Countdown läuft noch nicht)...";
+  statusTxt.textContent = "Warte auf Host...";
 };
 
 // ==============================
@@ -83,7 +83,7 @@ function startLobbyListener() {
   onSnapshot(ref, snap => {
     const data = snap.data();
 
-    // Show players
+    // Spieler anzeigen
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -94,6 +94,7 @@ function startLobbyListener() {
     if (data.gameStarted) {
       hostLobby.classList.add("hidden");
       gameScreen.classList.remove("hidden");
+
       statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
 
@@ -101,6 +102,11 @@ function startLobbyListener() {
       gameScreen.classList.add("hidden");
       votingScreen.classList.remove("hidden");
       renderImages(data.images);
+    }
+
+    // LIVE Countdown auch bei Spielern aktualisieren
+    if (data.gameStarted && !data.votingStarted) {
+      statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
   });
 }
@@ -161,7 +167,7 @@ uploadImageBtn.onclick = async () => {
 };
 
 // ==============================
-// VOTING-START NACH COUNTDOWN
+// VOTING STARTEN
 // ==============================
 async function startVoting() {
   await updateDoc(doc(db, "games", teamCode), {

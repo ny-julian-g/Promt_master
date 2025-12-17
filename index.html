@@ -2,14 +2,14 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Bild Game</title>
+  <title>Bild Ähnlichkeit Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <h1>Bild Ähnlichkeit Game</h1>
 
-  <!-- STARTSCREEN -->
+  <!-- START SCREEN -->
   <div id="startScreen">
     <button id="createGameBtn">Spiel erstellen</button>
 
@@ -32,13 +32,16 @@
   <!-- GAME SCREEN -->
   <div id="gameScreen" class="hidden">
     <h2>Runde läuft!</h2>
-    <p id="statusTxt"></p>
+    <p id="statusTxt"></p> <!-- Countdown Anzeige -->
 
     <input type="file" id="imageUpload">
     <button id="uploadImageBtn">Bild hochladen</button>
+  </div>
 
-    <h3>Alle Bilder</h3>
-    <div id="allImages"></div>
+  <!-- VOTING SCREEN -->
+  <div id="votingScreen" class="hidden">
+    <h2>Voting</h2>
+    <div id="imagesContainer"></div>
   </div>
 
   <script type="module" src="firebase-config.js"></script>
