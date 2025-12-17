@@ -1,16 +1,27 @@
 body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  text-align: center;
+    font-family: Arial;
+    margin: 20px;
 }
 
-#gallery img {
-  width: 200px;
-  margin: 10px;
+h1, h2 {
+    color: #333;
 }
 
 button {
-  padding: 10px 20px;
-  margin: 10px;
-  cursor: pointer;
+    margin: 5px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #008cff;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #006fd1;
+}
+
+#gallery img {
+    border: 2px solid #ccc;
+    margin: 10px;
 }

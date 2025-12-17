@@ -1,142 +1,57 @@
-import { storage, db } from "./firebase-config.js";
-
+import { db } from "./firebase-config.js";
 import {
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
+    doc, getDoc, onSnapshot, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-  collection,
-  addDoc,
-  getDocs,
-  updateDoc,
-  doc,
-  setDoc,
-  getDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+const lobbyId = "default-lobby";
+const lobbyRef = doc(db, "lobbies", lobbyId);
 
-// DOM Elemente
-const startBtn = document.getElementById("startGameBtn");
-const waitingMsg = document.getElementById("waitingMsg");
-const targetContainer = document.getElementById("target-container");
-const uploadContainer = document.getElementById("upload-container");
-const timerDisplay = document.getElementById("timer");
-const gallery = document.getElementById("gallery");
-const voteSection = document.getElementById("vote-section");
-const uploadBtn = document.getElementById("uploadBtn");
-const fileInput = document.getElementById("fileInput");
+let playerName = null;
 
-// Spielstatus Dokument
-const statusRef = doc(db, "game", "status");
+// Live update der Lobby
+onSnapshot(lobbyRef, (snap) => {
+    if (!snap.exists()) return;
 
-let time = 60;
+    const data = snap.data();
 
-// ---------- SPIEL STARTEN (HOST klickt Button) ----------
-startBtn.onclick = async () => {
-  await setDoc(statusRef, { gameStarted: true });
-  startBtn.style.display = "none";
-  waitingMsg.style.display = "none";
-  console.log("Spiel gestartet!");
-};
+    updateList("teamAList", data.teams.teamA);
+    updateList("teamBList", data.teams.teamB);
 
-// ---------- LISTENER: WARTET AUF SPIELSTART ----------
-onSnapshot(statusRef, (snapshot) => {
-  const data = snapshot.data();
-
-  if (data && data.gameStarted === true) {
-    console.log("Spielstart empfangen!");
-    startBtn.style.display = "none";
-    waitingMsg.style.display = "none";
-
-    targetContainer.style.display = "block";
-    uploadContainer.style.display = "block";
-    timerDisplay.style.display = "block";
-
-    startTimer();
-  } else {
-    // Spiel noch nicht gestartet
-    waitingMsg.style.display = "block";
-  }
+    if (data.roundStarted) {
+        window.location.href = "game.html";
+    }
 });
 
-// ---------- TIMER ----------
-function startTimer() {
-  const interval = setInterval(() => {
-    timerDisplay.innerText = "Zeit: " + time + "s";
-    time--;
+function updateList(id, players) {
+    const ul = document.getElementById(id);
+    ul.innerHTML = "";
+    players.forEach(p => {
+        const li = document.createElement("li");
+        li.textContent = p;
+        ul.appendChild(li);
+    });
+}
 
-    if (time < 0) {
-      clearInterval(interval);
-      loadImagesForVoting();
+// Team beitreten
+async function joinTeam(team) {
+    playerName = document.getElementById("playerName").value;
+    if (!playerName) return alert("Bitte Namen eingeben");
+
+    const snap = await getDoc(lobbyRef);
+    const data = snap.data();
+
+    const newTeams = { ...data.teams };
+    if (!newTeams[team].includes(playerName)) {
+        newTeams[team].push(playerName);
     }
-  }, 1000);
+
+    await updateDoc(lobbyRef, { teams: newTeams });
 }
 
-// ---------- BILD HOCHLADEN ----------
-uploadBtn.onclick = async () => {
-  const file = fileInput.files[0];
-  if (!file) return alert("Bitte ein Bild wählen.");
+document.getElementById("joinTeamA").onclick = () => joinTeam("teamA");
+document.getElementById("joinTeamB").onclick = () => joinTeam("teamB");
 
-  const fileRef = ref(storage, "uploads/" + Date.now() + "-" + file.name);
-  await uploadBytes(fileRef, file);
-  const url = await getDownloadURL(fileRef);
-
-  await addDoc(collection(db, "images"), {
-    url: url,
-    votes: 0
-  });
-
-  alert("Bild hochgeladen!");
+// Spiel starten
+document.getElementById("startGameBtn").onclick = async () => {
+    await updateDoc(lobbyRef, { roundStarted: true });
 };
-
-// ---------- BILDER LADEN → VOTING ----------
-async function loadImagesForVoting() {
-  const snap = await getDocs(collection(db, "images"));
-  gallery.innerHTML = "<h2>Alle Bilder</h2>";
-
-  snap.forEach(docu => {
-    const data = docu.data();
-
-    const wrapper = document.createElement("div");
-    wrapper.style.margin = "20px";
-
-    const img = document.createElement("img");
-    img.src = data.url;
-    wrapper.appendChild(img);
-
-    const btn = document.createElement("button");
-    btn.innerText = "Vote";
-    btn.onclick = () => vote(docu.id, data.votes);
-    wrapper.appendChild(btn);
-
-    gallery.appendChild(wrapper);
-  });
-}
-
-// ---------- VOTING ----------
-async function vote(id, currentVotes) {
-  await updateDoc(doc(db, "images", id), {
-    votes: currentVotes + 1
-  });
-  alert("Vote abgegeben!");
-  showWinner();
-}
-
-// ---------- GEWINNER ANZEIGEN ----------
-async function showWinner() {
-  const snap = await getDocs(collection(db, "images"));
-  let best = null;
-
-  snap.forEach(docu => {
-    const data = docu.data();
-    if (!best || data.votes > best.votes) best = data;
-  });
-
-  voteSection.innerHTML = `
-    <h2>Gewinner</h2>
-    <img src="${best.url}" width="300">
-    <p>Votes: ${best.votes}</p>
-  `;
-}
