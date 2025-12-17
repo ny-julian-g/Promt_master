@@ -22,21 +22,27 @@ const startRoundBtn = document.getElementById("startRoundBtn");
 const gameScreen = document.getElementById("gameScreen");
 const statusTxt = document.getElementById("statusTxt");
 
-const uploadImageBtn = document.getElementById("uploadImageBtn");
 const imageUpload = document.getElementById("imageUpload");
-const allImagesBox = document.getElementById("allImages");
+const uploadImageBtn = document.getElementById("uploadImageBtn");
+
+const votingScreen = document.getElementById("votingScreen");
+const imagesContainer = document.getElementById("imagesContainer");
 
 let teamCode = null;
 let username = "Player" + Math.floor(Math.random() * 9000);
 
-// HOST erstellt Spiel
+// ==============================
+// HOST SPIEL ERSTELLEN
+// ==============================
 createGameBtn.onclick = async () => {
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   await setDoc(doc(db, "games", teamCode), {
     players: [],
     gameStarted: false,
-    images: []  // neu!
+    countdown: 600, // 10 Minuten
+    images: {},
+    votingStarted: false
   });
 
   startScreen.classList.add("hidden");
@@ -46,15 +52,16 @@ createGameBtn.onclick = async () => {
   startLobbyListener();
 };
 
-// Spieler tritt Spiel bei
+// ==============================
+// SPIEL BEITRETEN
+// ==============================
 joinGameBtn.onclick = async () => {
   const code = joinCodeInput.value.trim();
   if (!/^\d{6}$/.test(code)) return alert("6-stelligen Code eingeben!");
 
   const ref = doc(db, "games", code);
   const snap = await getDoc(ref);
-
-  if (!snap.exists()) return alert("Dieses Spiel existiert nicht!");
+  if (!snap.exists()) return alert("Team existiert nicht!");
 
   teamCode = code;
 
@@ -64,17 +71,19 @@ joinGameBtn.onclick = async () => {
 
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  statusTxt.textContent = "Warte auf den Host...";
+  statusTxt.textContent = "Warte auf Host (Countdown läuft noch nicht)...";
 };
 
-// Lobby Listener
+// ==============================
+// LOBBY LIVE-UPDATES
+// ==============================
 function startLobbyListener() {
   const ref = doc(db, "games", teamCode);
 
   onSnapshot(ref, snap => {
     const data = snap.data();
 
-    // Spieler anzeigen
+    // Show players
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -82,49 +91,99 @@ function startLobbyListener() {
       lobbyPlayers.appendChild(li);
     });
 
-    // Startsignal
     if (data.gameStarted) {
       hostLobby.classList.add("hidden");
       gameScreen.classList.remove("hidden");
-      statusTxt.textContent = "Runde gestartet!";
+      statusTxt.textContent = `Countdown: ${data.countdown}s`;
     }
 
-    // Bilder anzeigen
-    allImagesBox.innerHTML = "";
-    data.images.forEach(img => {
-      const el = document.createElement("img");
-      el.src = img.base64;
-      el.className = "previewImg";
-      allImagesBox.appendChild(el);
-    });
+    if (data.votingStarted) {
+      gameScreen.classList.add("hidden");
+      votingScreen.classList.remove("hidden");
+      renderImages(data.images);
+    }
   });
 }
 
-// Host startet Runde
+// ==============================
+// HOST STARTET RUNDE
+// ==============================
 startRoundBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", teamCode), {
+  const ref = doc(db, "games", teamCode);
+
+  await updateDoc(ref, {
     gameStarted: true
   });
+
+  startCountdown();
 };
 
-// Bild hochladen → in Base64 umwandeln → Firestore speichern
+// ==============================
+// COUNTDOWN 10 MINUTEN
+// ==============================
+function startCountdown() {
+  const interval = setInterval(async () => {
+    const ref = doc(db, "games", teamCode);
+    const snap = await getDoc(ref);
+    const data = snap.data();
+
+    if (data.countdown <= 0) {
+      clearInterval(interval);
+      startVoting();
+      return;
+    }
+
+    await updateDoc(ref, {
+      countdown: data.countdown - 1
+    });
+  }, 1000);
+}
+
+// ==============================
+// BILD HOCHLADEN (BASE64)
+// ==============================
 uploadImageBtn.onclick = async () => {
-  if (!imageUpload.files[0]) return alert("Bitte ein Bild auswählen!");
+  const file = imageUpload.files[0];
+  if (!file) return alert("Bitte ein Bild auswählen!");
 
   const reader = new FileReader();
-
   reader.onload = async () => {
     const base64 = reader.result;
 
     await updateDoc(doc(db, "games", teamCode), {
-      images: arrayUnion({
-        user: username,
-        base64: base64
-      })
+      [`images.${username}`]: base64
     });
 
     alert("Bild hochgeladen!");
   };
 
-  reader.readAsDataURL(imageUpload.files[0]);
+  reader.readAsDataURL(file);
 };
+
+// ==============================
+// VOTING-START NACH COUNTDOWN
+// ==============================
+async function startVoting() {
+  await updateDoc(doc(db, "games", teamCode), {
+    votingStarted: true
+  });
+}
+
+// ==============================
+// BILDER ANZEIGEN
+// ==============================
+function renderImages(images) {
+  imagesContainer.innerHTML = "";
+
+  Object.entries(images).forEach(([player, img]) => {
+    const div = document.createElement("div");
+    div.classList.add("imgBox");
+
+    div.innerHTML = `
+      <h3>${player}</h3>
+      <img src="${img}" />
+    `;
+
+    imagesContainer.appendChild(div);
+  });
+}
