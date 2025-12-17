@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <title>Bild Game</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <title>Bild Ähnlichkeit Game</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -23,45 +23,263 @@
 <!-- HOST LOBBY -->
 <div id="hostLobby" class="hidden">
     <h2>Teamcode:</h2>
-    <div id="lobbyCode"></div>
+    <div id="lobbyCode" class="codeBox"></div>
 
     <h3>Spieler im Team:</h3>
     <ul id="lobbyPlayers"></ul>
 
     <button id="startRoundBtn">Runde starten</button>
-</div>
-
-<!-- GAME SCREEN -->
-<div id="gameScreen" class="hidden">
-    <h2>Spiel läuft</h2>
-    <p id="statusTxt"></p>
-
-    <div id="uploadArea">
-        <input type="file" id="imageUpload">
-        <button id="uploadImageBtn">Bild hochladen</button>
-    </div>
-
     <button id="stopRoundBtn" class="hidden">Runde beenden</button>
 </div>
 
+<!-- PLAYER SCREEN -->
+<div id="playerScreen" class="hidden">
+    <h2>Runde läuft!</h2>
+    <p id="statusTxt"></p>
+
+    <div id="playerUploadSection">
+        <input type="file" id="playerImage">
+        <button id="uploadImageBtn">Bild hochladen</button>
+    </div>
+</div>
+
 <!-- VOTING SCREEN -->
-<div id="votingScreen" class="hidden">
-    <h2>Voting</h2>
-    <div id="votingContainer"></div>
+<div id="votingSection" class="hidden">
+    <h2>Abstimmung</h2>
+    <div id="votingContainer" class="votingGrid"></div>
 </div>
 
-<!-- RESULT SCREEN -->
-<div id="resultScreen" class="hidden">
-    <h2>Ergebnis</h2>
-    <h3 id="winnerName"></h3>
+<!-- ADMIN RESULT SCREEN -->
+<div id="adminResults" class="hidden">
+    <h2>Gewinner</h2>
     <img id="winnerImage" class="winnerImage">
+    <h3 id="winnerName"></h3>
 
-    <h2>Alle Stimmen</h2>
-    <table id="resultsTable"></table>
+    <h2>Alle Ergebnisse</h2>
+    <table id="resultsTable" class="resultTable"></table>
 </div>
 
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="script.js"></script>
+<!-- FIREBASE + SCRIPT -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot }
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+const firebaseConfig = {
+    apiKey: "XXX",
+    authDomain: "XXX",
+    projectId: "XXX",
+    storageBucket: "XXX",
+    messagingSenderId: "XXX",
+    appId: "XXX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// GLOBAL VARIABLES
+let currentGameId = null;
+let userName = null;
+let isHost = false;
+let unsubListener = null;  // <- wichtiger Fix
+
+/* ----------------------------------------------------------
+   SPIEL ERSTELLEN
+---------------------------------------------------------- */
+document.getElementById("createGameBtn").onclick = async () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    currentGameId = code;
+    userName = "Host";
+    isHost = true;
+
+    await setDoc(doc(db, "games", code), {
+        players: [],
+        roundActive: false,
+        uploadedImages: {},
+        votes: {},
+        winner: null
+    });
+
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("hostLobby").classList.remove("hidden");
+
+    document.getElementById("lobbyCode").innerText = code;
+
+    startSnapshot();
+};
+
+/* ----------------------------------------------------------
+   SPIEL BEITRETEN
+---------------------------------------------------------- */
+document.getElementById("joinGameBtn").onclick = async () => {
+    const code = document.getElementById("joinCodeInput").value.trim();
+    const name = document.getElementById("usernameInput").value.trim();
+
+    if (!name || !code) return alert("Bitte Name & Code eingeben!");
+
+    const ref = doc(db, "games", code);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) return alert("Spiel existiert nicht!");
+
+    currentGameId = code;
+    userName = name;
+    isHost = false;
+
+    const players = snap.data().players;
+    if (!players.includes(name)) {
+        await updateDoc(ref, { players: [...players, name] });
+    }
+
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("playerScreen").classList.remove("hidden");
+
+    startSnapshot();
+};
+
+/* ----------------------------------------------------------
+   SNAPSHOT (LIVE UPDATE)
+---------------------------------------------------------- */
+function startSnapshot() {
+
+    if (unsubListener) unsubListener(); // Falls vorher aktiv → stoppen
+
+    unsubListener = onSnapshot(doc(db, "games", currentGameId), (snap) => {
+
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+
+        // HOST LOBBY PLAYER UPDATE
+        if (isHost) {
+            const list = document.getElementById("lobbyPlayers");
+            list.innerHTML = "";
+            data.players.forEach(name => {
+                const li = document.createElement("li");
+                li.innerText = name;
+                list.appendChild(li);
+            });
+        }
+
+        // STATUS TEXT
+        document.getElementById("statusTxt").innerText =
+            data.roundActive ? "Runde läuft!" : "Warte auf die Runde";
+
+        // HOST STOP BUTTON
+        if (isHost) {
+            document.getElementById("stopRoundBtn").classList.toggle("hidden", !data.roundActive);
+        }
+
+        // SHOW VOTING FOR PLAYERS
+        if (!isHost && !data.roundActive && Object.keys(data.uploadedImages).length > 0 && !data.winner) {
+            showVoting(data);
+        }
+
+        // HOST RESULTS
+        if (isHost && data.winner) {
+            showResults(data);
+        }
+    });
+}
+
+/* ----------------------------------------------------------
+   RUNDE STARTEN
+---------------------------------------------------------- */
+document.getElementById("startRoundBtn").onclick = async () => {
+    await updateDoc(doc(db, "games", currentGameId), {
+        roundActive: true,
+        uploadedImages: {},
+        votes: {},
+        winner: null
+    });
+};
+
+/* ----------------------------------------------------------
+   RUNDE STOPPEN
+---------------------------------------------------------- */
+document.getElementById("stopRoundBtn").onclick = async () => {
+    await updateDoc(doc(db, "games", currentGameId), {
+        roundActive: false
+    });
+};
+
+/* ----------------------------------------------------------
+   BILD HOCHLADEN
+---------------------------------------------------------- */
+document.getElementById("uploadImageBtn").onclick = async () => {
+    const fileInput = document.getElementById("playerImage");
+    if (!fileInput.files[0]) return alert("Bild auswählen!");
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+        await updateDoc(doc(db, "games", currentGameId), {
+            [`uploadedImages.${userName}`]: reader.result
+        });
+
+        document.getElementById("playerUploadSection").innerHTML = "<p>Bild hochgeladen ✔</p>";
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+};
+
+/* ----------------------------------------------------------
+   VOTING
+---------------------------------------------------------- */
+function showVoting(data) {
+    document.getElementById("votingSection").classList.remove("hidden");
+
+    const container = document.getElementById("votingContainer");
+    container.innerHTML = "";
+
+    Object.entries(data.uploadedImages).forEach(([player, img]) => {
+        if (player === userName) return; // kein Self-Vote
+
+        const box = document.createElement("div");
+        box.className = "voteBox";
+
+        box.innerHTML = `
+            <img src="${img}" class="voteImage">
+            <button onclick="voteFor('${player}')">Für ${player} stimmen</button>
+        `;
+
+        container.appendChild(box);
+    });
+}
+
+window.voteFor = async (player) => {
+    await updateDoc(doc(db, "games", currentGameId), {
+        [`votes.${userName}`]: player
+    });
+
+    document.getElementById("votingSection").innerHTML = "<p>Danke fürs Abstimmen ✔</p>";
+};
+
+/* ----------------------------------------------------------
+   ERGEBNIS
+---------------------------------------------------------- */
+function showResults(data) {
+
+    document.getElementById("adminResults").classList.remove("hidden");
+
+    const count = {};
+    Object.values(data.votes).forEach(v => {
+        count[v] = (count[v] || 0) + 1;
+    });
+
+    const winner = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+
+    document.getElementById("winnerImage").src = data.uploadedImages[winner];
+    document.getElementById("winnerName").innerText = winner;
+
+    const table = document.getElementById("resultsTable");
+    table.innerHTML = "";
+
+    Object.entries(count).forEach(([player, votes]) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${player}</td><td>${votes}</td>`;
+        table.appendChild(row);
+    });
+}
+
+</script>
 </body>
 </html>
