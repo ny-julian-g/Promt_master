@@ -2,25 +2,20 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Bild Ähnlichkeit Game</title>
+  <title>Bild Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
+
   <h1>Bild Ähnlichkeit Game</h1>
 
-  <!-- NAMEN EINGEBEN -->
-  <div id="nameScreen">
-    <h3>Dein Name:</h3>
-    <input id="nameInput" placeholder="Name eingeben">
-    <button id="saveNameBtn">Weiter</button>
-  </div>
-
   <!-- STARTSCREEN -->
-  <div id="startScreen" class="hidden">
+  <div id="startScreen">
     <button id="createGameBtn">Spiel erstellen</button>
 
     <h3>Spiel beitreten</h3>
+    <input id="usernameInput" placeholder="Name eingeben">
     <input id="joinCodeInput" placeholder="Teamcode eingeben">
     <button id="joinGameBtn">Beitreten</button>
   </div>
@@ -32,10 +27,6 @@
 
     <h3>Spieler im Team:</h3>
     <ul id="lobbyPlayers"></ul>
-
-    <h3>Original Bild hochladen</h3>
-    <input type="file" id="originalUpload">
-    <button id="uploadOriginalBtn">Original hochladen</button>
 
     <button id="startRoundBtn">Runde starten</button>
   </div>
@@ -54,15 +45,11 @@
   <!-- VOTING SCREEN -->
   <div id="votingScreen" class="hidden">
     <h2>Voting</h2>
-
-    <h3>Original</h3>
-    <div id="originalBox"></div>
-
-    <h3>Einsendungen</h3>
-    <div id="votingImages"></div>
+    <div id="imagesContainer"></div>
   </div>
 
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="script.js"></script>
+
 </body>
 </html>
