@@ -26,7 +26,6 @@ const statusTxt = document.getElementById("statusTxt");
 let teamCode = null;
 let username = "Player" + Math.floor(Math.random() * 9000);
 
-
 // HOST erstellt Spiel
 createGameBtn.onclick = async () => {
   teamCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -42,7 +41,6 @@ createGameBtn.onclick = async () => {
 
   startLobbyListener();
 };
-
 
 // Spieler tritt Spiel bei
 joinGameBtn.onclick = async () => {
@@ -66,7 +64,6 @@ joinGameBtn.onclick = async () => {
   statusTxt.textContent = "Warte auf den Host...";
 };
 
-
 // Lobby Listener
 function startLobbyListener() {
   const ref = doc(db, "games", teamCode);
@@ -88,7 +85,6 @@ function startLobbyListener() {
     }
   });
 }
-
 
 // Host startet Runde
 startRoundBtn.onclick = async () => {
