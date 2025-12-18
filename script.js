@@ -237,7 +237,9 @@ document.getElementById("startRoundBtn").onclick = async () => {
     uploadedImages: {},
     votes: {},
     winner: null,
-    timeLeft: 90
+    timeLeft: 90,
+    votingStartTime: null,
+    votingTimeLeft: 30
   });
   
   document.getElementById("hostLobby").classList.add("hidden");
@@ -565,7 +567,9 @@ document.getElementById("newRoundBtn").onclick = async () => {
     votes: {},
     winner: null,
     timeLeft: 90,
-    templateImage: null // Remove template image
+    templateImage: null, // Remove template image
+    votingStartTime: null,
+    votingTimeLeft: 30
   });
   
   document.getElementById("adminResults").classList.add("hidden");
@@ -714,6 +718,37 @@ function setupGameListener() {
     if (!gameData.roundActive && Object.keys(gameData.uploadedImages || {}).length > 0) {
       document.getElementById("gameScreen").classList.add("hidden");
       document.getElementById("votingSection").classList.remove("hidden");
+      
+      // Start 30 second voting timer if not already started
+      if (!gameData.votingStartTime) {
+        if (isHost) {
+          updateDoc(doc(db, "games", currentGameId), {
+            votingStartTime: Date.now(),
+            votingTimeLeft: 30
+          });
+        }
+      }
+      
+      // Check voting time limit (30 seconds)
+      if (gameData.votingStartTime) {
+        const timeElapsed = (Date.now() - gameData.votingStartTime) / 1000;
+        const timeLeft = Math.max(0, 30 - timeElapsed);
+        
+        // Update voting timer display
+        const votingTimer = document.getElementById("votingTimer");
+        if (votingTimer) {
+          votingTimer.innerText = `⏰ Zeit: ${Math.ceil(timeLeft)}s`;
+          if (timeLeft <= 10) {
+            votingTimer.style.color = "#d32f2f";
+          }
+        }
+        
+        // Auto-show results after 30 seconds
+        if (timeLeft <= 0) {
+          displayResults(gameData);
+          return;
+        }
+      }
       
       // Show results when all players have rated (check ratings instead of votes)
       const totalPlayers = gameData.players?.length || 0;

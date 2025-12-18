@@ -47,7 +47,7 @@
   <div id="hostImageUpload">
     <h3>🎁 Weihnachtliche Vorlage hochladen: ⭐</h3>
     <p>📸 Lade ein Bild hoch, das die Elfen nachbauen sollen!</p>
-    <input type="file" id="hostImageInput">
+    <input type="file" id="hostImageInput" accept=".png,.jpg,.jpeg,.gif,.webp,.avif,image/png,image/jpeg,image/gif,image/webp,image/avif">
     <button id="uploadHostImageBtn">🎄 Weihnachts-Vorlage hochladen</button>
   </div>
 
@@ -92,7 +92,10 @@
 
   <div id="uploadArea">
     <h4>🎁 Lade dein Weihnachtsbild hoch: 📸</h4>
-    <input type="file" id="imageUpload" accept="image/*,.png,.jpg,.jpeg,.gif,.webp">
+    <p style="color: #ffeb3b; margin: 10px 0;">
+      💡 Tipp: Nutze <a href="https://gemini.google.com/" target="_blank" style="color: #ff5252; text-decoration: underline;">Google Gemini</a> um Bilder zu generieren!
+    </p>
+    <input type="file" id="imageUpload" accept=".png,.jpg,.jpeg,.gif,.webp,.avif,image/png,image/jpeg,image/gif,image/webp,image/avif">
     <button id="uploadImageBtn">🎄 Weihnachtsbild hochladen 🎅</button>
   </div>
 
@@ -113,6 +116,9 @@
   <h3 style="text-align: center; color: #ffeb3b; margin: 20px 0; text-shadow: 0 0 10px #ff5252;">
     ⭐ 🎅 Santa braucht deine Hilfe! Bewerte die Weihnachtswunder (1-5 Sterne)! 🎄 ⭐
   </h3>
+  <div id="votingTimer" style="text-align: center; font-size: 24px; font-weight: bold; color: #ffeb3b; margin: 15px 0;">
+    ⏰ Zeit: 30s
+  </div>
   <div id="votingContainer"></div>
 </div>
 
