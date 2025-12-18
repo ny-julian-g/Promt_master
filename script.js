@@ -26,8 +26,8 @@ document.getElementById("createGameBtn").onclick = async () => {
 };
 
 document.getElementById("joinGameBtn").onclick = async () => {
-  const code = joinCodeInput.value.trim();
-  const name = usernameInput.value.trim();
+  const code = document.getElementById("joinCodeInput").value.trim();
+  const name = document.getElementById("usernameInput").value.trim();
 
   const ref = doc(db, "games", code);
   const snap = await getDoc(ref);
@@ -168,7 +168,11 @@ function showResults(gameData) {
   document.getElementById("winnerImage").src = gameData.uploadedImages[winner];
   
   const table = document.getElementById("resultsTable");
-  table.innerHTML = "";
+  // Keep header, remove only data rows
+  while(table.rows.length > 1) {
+    table.deleteRow(1);
+  }
+  
   Object.entries(voteCounts).forEach(([player, votes]) => {
     const row = table.insertRow();
     row.insertCell().innerText = player;
@@ -178,6 +182,23 @@ function showResults(gameData) {
   document.getElementById("votingSection").classList.add("hidden");
   document.getElementById("adminResults").classList.remove("hidden");
 }
+
+// New round button handler
+document.getElementById("newRoundBtn").onclick = async () => {
+  if (!isHost) return;
+  
+  await updateDoc(doc(db, "games", currentGameId), {
+    roundActive: true,
+    uploadedImages: {},
+    votes: {},
+    winner: null
+  });
+  
+  document.getElementById("adminResults").classList.add("hidden");
+  document.getElementById("gameScreen").classList.remove("hidden");
+  document.getElementById("statusTxt").innerText = "Neue Runde gestartet! Warte auf Bilder...";
+  document.getElementById("stopRoundBtn").classList.add("hidden");
+};
 
 onSnapshot(
   () => currentGameId ? doc(db, "games", currentGameId) : null,
@@ -198,9 +219,19 @@ onSnapshot(
     }
     
     // Handle round start for all players
-    if (gameData.roundActive && !isHost) {
+    if (gameData.roundActive) {
       document.getElementById("gameScreen").classList.remove("hidden");
-      document.getElementById("statusTxt").innerText = "Runde läuft! Lade dein Bild hoch.";
+      document.getElementById("votingSection").classList.add("hidden");
+      document.getElementById("adminResults").classList.add("hidden");
+      
+      if (!isHost) {
+        document.getElementById("statusTxt").innerText = "Runde läuft! Lade dein Bild hoch.";
+      }
+      
+      // Reset upload area visibility if round restarted
+      if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
+        document.getElementById("uploadArea").classList.remove("hidden");
+      }
     }
     
     // Display all uploaded images in real-time

@@ -116,8 +116,8 @@ input:focus {
             0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
-/* Bilder-Galerie */
-#allImages {
+/* Voting Container */
+#votingContainer {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
@@ -125,18 +125,109 @@ input:focus {
     margin-top: 35px;
 }
 
-#allImages img {
+.voting-item {
+    text-align: center;
+}
+
+.voting-item img {
     width: 220px;
+    height: 220px;
     border-radius: 16px;
     object-fit: cover;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
+    cursor: pointer;
+    border: 2px solid #ccc;
 }
 
-/* ❄️ Winterlicher Hover */
-#allImages img:hover {
+.voting-item img:hover {
     transform: scale(1.06);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    border-color: #888;
+}
+
+.voting-item p {
+    margin-top: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Upload Area */
+#uploadArea {
+    margin: 20px 0;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+#uploadArea input[type="file"] {
+    margin: 10px 0;
+}
+
+/* Status Text */
+#statusTxt {
+    font-size: 18px;
+    font-weight: 600;
+    color: #444;
+    margin: 15px 0;
+}
+
+/* Results Table */
+#resultsTable {
+    margin: 20px auto;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#resultsTable th, #resultsTable td {
+    padding: 12px 20px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+#resultsTable th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+/* Winner Display */
+#adminResults {
+    text-align: center;
+    margin: 30px 0;
+}
+
+#winnerImage {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    margin: 20px 0;
+}
+
+#winnerName {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c5530;
+    margin: 15px 0;
+}
+
+/* Lobby Players */
+#lobbyPlayers {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+#lobbyPlayers li {
+    background: #f0f0f0;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 500;
 }
 
 /* Überschriften */
