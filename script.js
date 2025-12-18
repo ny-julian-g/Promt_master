@@ -2,7 +2,6 @@ import { db } from "./firebase-config.js";
 import {
   doc, setDoc, getDoc, updateDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 let currentGameId = null;
 let userName = null;
@@ -10,19 +9,6 @@ let isHost = false;
 let gameTimer = null;
 let timeRemaining = 90; // 1.5 minutes in seconds
 
-// AI API Integration
-const GEMINI_API_KEY = 'AIzaSyB2rnjkUqZ7zsya8A4-NXjuu8_V2kmJRfQ';
-const HUGGING_FACE_TOKEN = 'hf_your_token_here'; // Free token from https://huggingface.co/settings/tokens
-
-// Try to initialize Gemini, but handle errors gracefully
-let genAI;
-let geminiAvailable = false;
-try {
-  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  geminiAvailable = true;
-} catch (error) {
-  console.warn('Gemini initialization failed:', error);
-}
 
 // Notification system
 function showNotification(message, type = "info") {
@@ -178,351 +164,16 @@ document.getElementById("joinGameBtn").onclick = async () => {
     players: [...snap.data().players, name]
   });
 
+  // Show "Runde beigetreten" message first
+  showNotification("🎄 Runde beigetreten! 🎅", "success");
+  
+  // Show waiting screen instead of game screen
   document.getElementById("startScreen").classList.add("hidden");
-  document.getElementById("gameScreen").classList.remove("hidden");
-  document.getElementById("uploadArea").classList.add("hidden");
-  document.getElementById("statusTxt").innerText = "Warte, bis der Host die Runde startet...";
+  document.getElementById("waitingScreen").classList.remove("hidden");
   
   setupGameListener();
 };
 
-// Simple prompt enhancement without API (fallback)
-function enhancePromptLocally(userPrompt) {
-  const enhancements = [
-    "highly detailed, photorealistic",
-    "professional photography, 4k resolution",
-    "beautiful lighting, sharp focus",
-    "award-winning photography",
-    "digital art, masterpiece",
-    "trending on artstation",
-    "cinematic lighting",
-    "ultra-detailed, high quality",
-    "vibrant colors, stunning composition",
-    "hyperrealistic, 8k uhd"
-  ];
-  
-  const styles = [
-    "photographic style",
-    "digital art style", 
-    "cinematic style",
-    "artistic style",
-    "realistic style"
-  ];
-  
-  const randomEnhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
-  const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-  
-  return `${userPrompt}, ${randomEnhancement}, ${randomStyle}`;
-}
-
-// Gemini AI Functions
-async function enhancePromptWithGemini(userPrompt) {
-  if (!userPrompt.trim()) {
-    showNotification("Bitte gib zuerst einen Prompt ein!", "error");
-    return null;
-  }
-  
-  // Check if Gemini is available
-  if (!geminiAvailable) {
-    showNotification("🔧 Gemini API nicht verfügbar, verwende lokale Verbesserung...", "info");
-    const enhanced = enhancePromptLocally(userPrompt);
-    showNotification("✨ Prompt lokal verbessert!", "success");
-    return enhanced;
-  }
-  
-  try {
-    showNotification("🤖 Gemini verbessert deinen Prompt...", "info");
-    
-    // Get the model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    // Create the prompt for enhancement
-    const prompt = `Du bist ein Experte für KI-Bildgenerierung. Verbessere folgenden Prompt für bessere, detailliertere und kreativere Ergebnisse. Mache ihn spezifischer, füge Stil-Beschreibungen hinzu und optimiere ihn für KI-Tools wie DALL-E, Midjourney oder Stable Diffusion. Gib nur den verbesserten Prompt zurück, keine Erklärungen:
-
-Ursprünglicher Prompt: "${userPrompt}"`;
-    
-    // Generate content
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const enhancedPrompt = response.text().trim();
-    
-    if (enhancedPrompt) {
-      showNotification("✨ Prompt mit Gemini verbessert!", "success");
-      return enhancedPrompt;
-    } else {
-      throw new Error('Leere Antwort von Gemini');
-    }
-  } catch (error) {
-    console.error('Gemini API Error:', error);
-    
-    // Check if it's an API activation error
-    if (error.message.includes('SERVICE_DISABLED') || error.message.includes('403')) {
-      showNotification("⚠️ Gemini API nicht aktiviert. Verwende lokale Verbesserung...", "info");
-      const enhanced = enhancePromptLocally(userPrompt);
-      showNotification("✨ Prompt lokal verbessert!", "success");
-      return enhanced;
-    } else {
-      showNotification("❌ Fehler bei Gemini API. Versuche es später erneut.", "error");
-      return null;
-    }
-  }
-}
-
-// Prompt Enhancement Button Handler
-document.getElementById("enhancePromptBtn").onclick = async () => {
-  const promptInput = document.getElementById("promptInput");
-  const currentPrompt = promptInput.value.trim();
-  
-  if (!currentPrompt) {
-    showNotification("Bitte gib zuerst einen Prompt ein!", "error");
-    promptInput.focus();
-    return;
-  }
-  
-  // Disable button during processing
-  const enhanceBtn = document.getElementById("enhancePromptBtn");
-  enhanceBtn.disabled = true;
-  enhanceBtn.innerText = "🤖 Verarbeitung...";
-  
-  try {
-    const enhancedPrompt = await enhancePromptWithGemini(currentPrompt);
-    
-    if (enhancedPrompt) {
-      promptInput.value = enhancedPrompt;
-      promptInput.style.height = 'auto';
-      promptInput.style.height = promptInput.scrollHeight + 'px'; // Auto-resize
-    }
-  } finally {
-    // Re-enable button
-    enhanceBtn.disabled = false;
-    enhanceBtn.innerText = "✨ Mit Gemini verbessern";
-  }
-};
-
-// Clear Prompt Button Handler
-document.getElementById("clearPromptBtn").onclick = () => {
-  document.getElementById("promptInput").value = "";
-  document.getElementById("promptInput").style.height = 'auto';
-  showNotification("🗑️ Prompt gelöscht", "info");
-};
-
-// AI Model configurations
-const AI_MODELS = {
-  'stable-diffusion-xl': {
-    url: 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
-    name: 'Stable Diffusion XL'
-  },
-  'stable-diffusion-v1-5': {
-    url: 'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
-    name: 'Stable Diffusion v1.5'
-  },
-  'dalle-mini': {
-    url: 'https://api-inference.huggingface.co/models/dallinmackay/dalle-mini',
-    name: 'DALL-E Mini'
-  },
-  'midjourney-style': {
-    url: 'https://api-inference.huggingface.co/models/prompthero/openjourney',
-    name: 'Midjourney Style'
-  },
-  'anime-diffusion': {
-    url: 'https://api-inference.huggingface.co/models/hakurei/waifu-diffusion',
-    name: 'Anime Diffusion'
-  }
-};
-
-// Image generation with Hugging Face
-async function generateImageWithAI(prompt, modelKey) {
-  const model = AI_MODELS[modelKey];
-  
-  if (!model) {
-    throw new Error('Unbekanntes AI-Modell');
-  }
-  
-  try {
-    showNotification(`🎨 ${model.name} generiert Bild...`, "info");
-    
-    const response = await fetch(model.url, {
-      headers: {
-        'Authorization': `Bearer ${HUGGING_FACE_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify({
-        inputs: prompt,
-        options: {
-          wait_for_model: true
-        }
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const blob = await response.blob();
-    const imageUrl = URL.createObjectURL(blob);
-    
-    showNotification(`✨ Bild mit ${model.name} erstellt!`, "success");
-    return imageUrl;
-    
-  } catch (error) {
-    console.error('Hugging Face API Error:', error);
-    
-    // Fallback: Generate a placeholder image
-    if (HUGGING_FACE_TOKEN === 'hf_your_token_here') {
-      showNotification("⚠️ Hugging Face Token nicht konfiguriert. Erstelle Demo-Bild...", "info");
-      return generateDemoImage(prompt);
-    } else {
-      throw error;
-    }
-  }
-}
-
-// Generate demo image as fallback
-function generateDemoImage(prompt) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-  
-  // Create gradient background
-  const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-  gradient.addColorStop(0, '#667eea');
-  gradient.addColorStop(1, '#764ba2');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 512, 512);
-  
-  // Add text
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('🎨 DEMO IMAGE', 256, 200);
-  
-  ctx.font = '16px Arial';
-  const words = prompt.split(' ');
-  let line = '';
-  let y = 250;
-  
-  for (let i = 0; i < words.length; i++) {
-    const testLine = line + words[i] + ' ';
-    const metrics = ctx.measureText(testLine);
-    const testWidth = metrics.width;
-    
-    if (testWidth > 450 && i > 0) {
-      ctx.fillText(line, 256, y);
-      line = words[i] + ' ';
-      y += 30;
-    } else {
-      line = testLine;
-    }
-  }
-  ctx.fillText(line, 256, y);
-  
-  ctx.font = '12px Arial';
-  ctx.fillText('(Demo - Configure Hugging Face token for real AI)', 256, 450);
-  
-  return canvas.toDataURL();
-}
-
-// Image Generation Button Handler
-document.getElementById("generateImageBtn").onclick = async () => {
-  const promptInput = document.getElementById("promptInput");
-  const modelSelect = document.getElementById("aiModelSelect");
-  const currentPrompt = promptInput.value.trim();
-  
-  if (!currentPrompt) {
-    showNotification("Bitte gib zuerst einen Prompt ein!", "error");
-    promptInput.focus();
-    return;
-  }
-  
-  // Disable button during generation
-  const generateBtn = document.getElementById("generateImageBtn");
-  generateBtn.disabled = true;
-  generateBtn.innerText = "🎨 Generiere...";
-  
-  try {
-    const selectedModel = modelSelect.value;
-    const imageUrl = await generateImageWithAI(currentPrompt, selectedModel);
-    
-    // Show generated image
-    const generatedImg = document.getElementById("generatedImage");
-    const generatedArea = document.getElementById("generatedImageArea");
-    
-    generatedImg.src = imageUrl;
-    generatedArea.classList.remove("hidden");
-    
-    // Scroll to generated image
-    generatedArea.scrollIntoView({ behavior: 'smooth' });
-    
-  } catch (error) {
-    console.error('Image generation error:', error);
-    showNotification("❌ Fehler bei Bildgenerierung. Versuche es erneut.", "error");
-  } finally {
-    // Re-enable button
-    generateBtn.disabled = false;
-    generateBtn.innerText = "🎨 Bild generieren";
-  }
-};
-
-// Use Generated Image Button Handler
-document.getElementById("useGeneratedImageBtn").onclick = () => {
-  const generatedImg = document.getElementById("generatedImage");
-  
-  if (generatedImg.src) {
-    // Convert to blob and create file
-    fetch(generatedImg.src)
-      .then(res => res.blob())
-      .then(blob => {
-        // Create a File object
-        const file = new File([blob], 'generated-image.png', { type: 'image/png' });
-        
-        // Upload the generated image
-        uploadGeneratedImage(file);
-      })
-      .catch(error => {
-        console.error('Error converting image:', error);
-        showNotification("❌ Fehler beim Verarbeiten des Bildes.", "error");
-      });
-  }
-};
-
-// Upload generated image function
-async function uploadGeneratedImage(file) {
-  try {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const imageData = e.target.result;
-      
-      const ref = doc(db, "games", currentGameId);
-      const snap = await getDoc(ref);
-      const gameData = snap.data();
-      
-      await updateDoc(ref, {
-        uploadedImages: {
-          ...gameData.uploadedImages,
-          [userName]: imageData
-        }
-      });
-      
-      document.getElementById("promptArea").classList.add("hidden");
-      document.getElementById("uploadArea").classList.add("hidden");
-      document.getElementById("statusTxt").innerText = "KI-Bild hochgeladen! Warte auf andere Spieler...";
-      
-      showNotification("✅ Generiertes Bild erfolgreich hochgeladen!", "success");
-    };
-    
-    reader.readAsDataURL(file);
-  } catch (error) {
-    console.error('Upload error:', error);
-    showNotification("❌ Fehler beim Hochladen des Bildes.", "error");
-  }
-}
-
-// Regenerate Button Handler
-document.getElementById("regenerateBtn").onclick = () => {
-  document.getElementById("generateImageBtn").click();
-};
 
 // Timer functions
 function startGameTimer() {
@@ -946,6 +597,19 @@ function setupGameListener() {
         });
       }
       
+      // Update waiting screen players list (for joined players)
+      const waitingPlayersList = document.getElementById("waitingPlayersList");
+      if (waitingPlayersList) {
+        waitingPlayersList.innerHTML = "";
+        gameData.players.forEach(player => {
+          if (player !== userName) { // Don't show self in "other players" list
+            const li = document.createElement("li");
+            li.innerText = player;
+            waitingPlayersList.appendChild(li);
+          }
+        });
+      }
+      
       // Update game screen players list
       const gamePlayersList = document.getElementById("gamePlayersList");
       if (gamePlayersList) {
@@ -1010,23 +674,25 @@ function setupGameListener() {
       // Hide all other screens
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("hostLobby").classList.add("hidden");
+      document.getElementById("waitingScreen").classList.add("hidden");
       document.getElementById("votingSection").classList.add("hidden");
       document.getElementById("adminResults").classList.add("hidden");
       
       // Show game screen for everyone
       document.getElementById("gameScreen").classList.remove("hidden");
       
-      // Show template image and instructions for all players
+      // Show template image and instructions for all players ONLY when round is active
       if (gameData.templateImage) {
         document.getElementById("hostTemplateImage").classList.remove("hidden");
         document.getElementById("templateImage").src = gameData.templateImage;
       }
       
+      
       if (isHost) {
-        document.getElementById("statusTxt").innerText = "Runde läuft! Warte auf Bilder der Spieler...";
+        document.getElementById("statusTxt").innerText = "🎅 Runde läuft! Warte auf Bilder der Elfen... 🧝‍♂️";
         document.getElementById("uploadArea").classList.add("hidden");
       } else {
-        document.getElementById("statusTxt").innerText = "Erstelle dein Bild basierend auf der Vorlage!";
+        document.getElementById("statusTxt").innerText = "🎄 Erstelle dein Bild basierend auf Santa's Vorlage! ✨";
         // Reset upload area visibility if round restarted
         if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
           document.getElementById("uploadArea").classList.remove("hidden");
