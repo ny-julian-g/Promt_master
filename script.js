@@ -291,6 +291,9 @@ document.getElementById("stopRoundBtn").onclick = async () => {
   
   document.getElementById("gameScreen").classList.add("hidden");
   document.getElementById("votingSection").classList.remove("hidden");
+  
+  // Reset host image upload for next round
+  resetHostImageUpload();
 };
 
 // Function to display all uploaded images for voting
@@ -375,24 +378,48 @@ function displayResults(gameData) {
   document.getElementById("adminResults").classList.remove("hidden");
 }
 
+// Function to reset host image upload area
+function resetHostImageUpload() {
+  if (!isHost) return;
+  
+  // Reset host image upload area
+  document.getElementById("hostImageInput").value = "";
+  document.getElementById("hostImageUpload").style.opacity = "1";
+  document.getElementById("uploadHostImageBtn").disabled = false;
+  document.getElementById("uploadHostImageBtn").innerText = "Vorlage hochladen";
+  document.getElementById("uploadHostImageBtn").style.background = "";
+  
+  // Reset start button
+  const startBtn = document.getElementById("startRoundBtn");
+  startBtn.disabled = false;
+  startBtn.style.background = "";
+  startBtn.innerText = "Runde starten";
+  
+  // Hide template image
+  document.getElementById("hostTemplateImage").classList.add("hidden");
+  
+  showNotification("🔄 Neue Runde! Bitte lade eine neue Vorlage hoch.", "info");
+}
+
 // New round button handler
 document.getElementById("newRoundBtn").onclick = async () => {
   if (!isHost) return;
   
+  // Clear template image from database for new round
   await updateDoc(doc(db, "games", currentGameId), {
-    roundActive: true,
+    roundActive: false, // Set to false initially for new image upload
     uploadedImages: {},
     votes: {},
     winner: null,
-    timeLeft: 90
+    timeLeft: 90,
+    templateImage: null // Remove template image
   });
   
   document.getElementById("adminResults").classList.add("hidden");
-  document.getElementById("gameScreen").classList.remove("hidden");
-  document.getElementById("statusTxt").innerText = "Neue Runde gestartet! Warte auf Bilder...";
-  document.getElementById("stopRoundBtn").classList.add("hidden");
+  document.getElementById("hostLobby").classList.remove("hidden"); // Go back to lobby for new image
   
-  startGameTimer(); // Restart timer
+  // Reset host image upload
+  resetHostImageUpload();
 };
 
 // Real-time listener function
