@@ -177,7 +177,7 @@ document.getElementById("joinGameBtn").onclick = async () => {
 
 // Timer functions
 function startGameTimer() {
-  timeRemaining = 90; // Reset to 1.5 minutes
+  timeRemaining = 300; // Reset to 1.5 minutes
   updateTimerDisplay();
   
   gameTimer = setInterval(() => {
