@@ -5,51 +5,43 @@
   <title>Bild Ähnlichkeit Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <h1>Bild Ähnlichkeit Game</h1>
 
-<!-- START -->
 <div id="startScreen">
   <button id="createGameBtn">Spiel erstellen</button>
-
-  <h3>Spiel beitreten</h3>
+  <h3>Beitreten</h3>
   <input id="usernameInput" placeholder="Name">
   <input id="joinCodeInput" placeholder="Code">
   <button id="joinGameBtn">Beitreten</button>
 </div>
 
-<!-- HOST -->
 <div id="hostLobby" class="hidden">
-  <h2>Code:</h2>
+  <h2>Teamcode</h2>
   <div id="lobbyCode" class="codeBox"></div>
-
   <h3>Spieler</h3>
   <ul id="lobbyPlayers"></ul>
+  <button id="startRoundBtn">Runde starten (60s)</button>
+</div>
 
-  <button id="startRoundBtn">Runde starten</button>
+<div id="gameScreen" class="hidden">
+  <p id="timerTxt"></p>
+  <input type="file" id="imageUpload">
+  <button id="uploadImageBtn">Bild hochladen</button>
   <button id="stopRoundBtn" class="hidden">Runde beenden</button>
 </div>
 
-<!-- GAME -->
-<div id="gameScreen" class="hidden">
-  <p id="statusTxt"></p>
-  <input type="file" id="imageUpload">
-  <button id="uploadImageBtn">Bild hochladen</button>
-</div>
-
-<!-- VOTING -->
 <div id="votingSection" class="hidden">
   <h2>Abstimmung</h2>
   <div id="votingContainer"></div>
 </div>
 
-<!-- RESULT -->
-<div id="resultScreen" class="hidden">
+<div id="adminResults" class="hidden">
   <h2>Gewinner</h2>
   <img id="winnerImage">
   <h3 id="winnerName"></h3>
+  <table id="resultsTable"></table>
 </div>
 
 <script type="module" src="script.js"></script>

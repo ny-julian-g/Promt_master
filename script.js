@@ -3,138 +3,173 @@ import {
   doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const $ = id => document.getElementById(id);
-
 let gameId = null;
 let username = null;
 let isHost = false;
+let timerInterval = null;
 
-/* ---------- CREATE ---------- */
-$("createGameBtn").onclick = async () => {
+// ELEMENTE
+const startScreen = document.getElementById("startScreen");
+const hostLobby = document.getElementById("hostLobby");
+const gameScreen = document.getElementById("gameScreen");
+const votingSection = document.getElementById("votingSection");
+const adminResults = document.getElementById("adminResults");
+
+const lobbyCode = document.getElementById("lobbyCode");
+const lobbyPlayers = document.getElementById("lobbyPlayers");
+const timerTxt = document.getElementById("timerTxt");
+const stopRoundBtn = document.getElementById("stopRoundBtn");
+
+// ---------------- CREATE GAME ----------------
+document.getElementById("createGameBtn").onclick = async () => {
   isHost = true;
-  username = "Host";
+  username = "HOST";
   gameId = Math.floor(100000 + Math.random() * 900000).toString();
 
   await setDoc(doc(db, "games", gameId), {
     players: [],
     roundActive: false,
+    roundEndsAt: null,
     images: {},
     votes: {},
     winner: null
   });
 
-  $("startScreen").classList.add("hidden");
-  $("hostLobby").classList.remove("hidden");
-  $("lobbyCode").innerText = gameId;
+  startScreen.classList.add("hidden");
+  hostLobby.classList.remove("hidden");
+  lobbyCode.textContent = gameId;
 
-  listen();
+  startSnapshot();
 };
 
-/* ---------- JOIN ---------- */
-$("joinGameBtn").onclick = async () => {
-  username = $("usernameInput").value.trim();
-  gameId = $("joinCodeInput").value.trim();
+// ---------------- JOIN GAME ----------------
+document.getElementById("joinGameBtn").onclick = async () => {
+  username = document.getElementById("usernameInput").value.trim();
+  gameId = document.getElementById("joinCodeInput").value.trim();
 
   const ref = doc(db, "games", gameId);
   const snap = await getDoc(ref);
-  if (!snap.exists()) return alert("Spiel nicht gefunden");
+  if (!snap.exists()) return alert("Spiel existiert nicht");
 
-  await updateDoc(ref, { players: arrayUnion(username) });
+  await updateDoc(ref, {
+    players: arrayUnion(username)
+  });
 
-  $("startScreen").classList.add("hidden");
-  $("gameScreen").classList.remove("hidden");
+  startScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
 
-  listen();
+  startSnapshot();
 };
 
-/* ---------- LISTENER ---------- */
-function listen() {
-  onSnapshot(doc(db, "games", gameId), snap => {
-    const d = snap.data();
-    if (!d) return;
+// ---------------- SNAPSHOT ----------------
+function startSnapshot() {
+  const ref = doc(db, "games", gameId);
 
-    $("lobbyPlayers").innerHTML = "";
-    d.players.forEach(p => {
+  onSnapshot(ref, snap => {
+    const data = snap.data();
+    if (!data) return;
+
+    // Lobby
+    lobbyPlayers.innerHTML = "";
+    data.players.forEach(p => {
       const li = document.createElement("li");
-      li.innerText = p;
-      $("lobbyPlayers").appendChild(li);
+      li.textContent = p;
+      lobbyPlayers.appendChild(li);
     });
 
-    $("statusTxt").innerText = d.roundActive ? "Runde läuft" : "Warten";
-
-    if (!d.roundActive && Object.keys(d.images).length && !d.winner) {
-      showVoting(d);
+    // Timer
+    if (data.roundActive && data.roundEndsAt) {
+      startTimer(data.roundEndsAt);
+      stopRoundBtn.classList.toggle("hidden", !isHost);
     }
 
-    if (d.winner) showResult(d);
+    if (!data.roundActive && Object.keys(data.images).length > 0 && !data.winner) {
+      showVoting(data);
+    }
+
+    if (data.winner) showResults(data);
   });
 }
 
-/* ---------- ROUND ---------- */
-$("startRoundBtn").onclick = async () => {
+// ---------------- START ROUND ----------------
+document.getElementById("startRoundBtn").onclick = async () => {
+  const end = Date.now() + 60000;
+
   await updateDoc(doc(db, "games", gameId), {
     roundActive: true,
+    roundEndsAt: end,
     images: {},
     votes: {},
     winner: null
   });
-  $("stopRoundBtn").classList.remove("hidden");
+
+  gameScreen.classList.remove("hidden");
 };
 
-$("stopRoundBtn").onclick = async () => {
-  await updateDoc(doc(db, "games", gameId), { roundActive: false });
+// ---------------- STOP ROUND ----------------
+stopRoundBtn.onclick = async () => {
+  await updateDoc(doc(db, "games", gameId), {
+    roundActive: false
+  });
 };
 
-/* ---------- UPLOAD ---------- */
-$("uploadImageBtn").onclick = async () => {
-  const file = $("imageUpload").files[0];
+// ---------------- TIMER ----------------
+function startTimer(endTime) {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    timerTxt.textContent = `Zeit: ${left}s`;
+    if (left === 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+// ---------------- UPLOAD ----------------
+document.getElementById("uploadImageBtn").onclick = async () => {
+  if (isHost) return;
+  const file = document.getElementById("imageUpload").files[0];
   if (!file) return;
 
-  const r = new FileReader();
-  r.onload = async () => {
+  const reader = new FileReader();
+  reader.onload = async () => {
     await updateDoc(doc(db, "games", gameId), {
-      [`images.${username}`]: r.result
+      [`images.${username}`]: reader.result
     });
-    $("uploadImageBtn").disabled = true;
   };
-  r.readAsDataURL(file);
+  reader.readAsDataURL(file);
 };
 
-/* ---------- VOTING ---------- */
+// ---------------- VOTING ----------------
 function showVoting(data) {
-  $("votingSection").classList.remove("hidden");
-  $("votingContainer").innerHTML = "";
-
-  if (isHost) return;
+  votingSection.classList.remove("hidden");
+  const c = document.getElementById("votingContainer");
+  c.innerHTML = "";
 
   Object.entries(data.images).forEach(([name, img]) => {
-    if (name === username) return;
+    if (name === username || isHost) return;
 
     const div = document.createElement("div");
     div.innerHTML = `
       <img src="${img}" width="200">
-      <button>Für ${name}</button>
+      <button onclick="vote('${name}')">${name}</button>
     `;
-    div.querySelector("button").onclick = async () => {
-      await updateDoc(doc(db, "games", gameId), {
-        [`votes.${username}`]: name
-      });
-      $("votingContainer").innerHTML = "Danke fürs Abstimmen ✔";
-    };
-    $("votingContainer").appendChild(div);
+    c.appendChild(div);
   });
 }
 
-/* ---------- RESULT ---------- */
-function showResult(data) {
-  $("resultScreen").classList.remove("hidden");
+window.vote = async (name) => {
+  await updateDoc(doc(db, "games", gameId), {
+    [`votes.${username}`]: name
+  });
+};
 
-  const counts = {};
-  Object.values(data.votes).forEach(v => counts[v] = (counts[v] || 0) + 1);
+// ---------------- RESULTS ----------------
+function showResults(data) {
+  adminResults.classList.remove("hidden");
 
-  const winner = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
-  updateDoc(doc(db, "games", gameId), { winner });
+  const count = {};
+  Object.values(data.votes).forEach(v => count[v] = (count[v] || 0) + 1);
+  const winner = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
 
-  $("winnerName").innerText = winner;
-  $("winnerImage").src = data.images[winner];
+  document.getElementById("winnerName").textContent = winner;
+  document.getElementById("winnerImage").src = data.images[winner];
 }
