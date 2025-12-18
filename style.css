@@ -254,14 +254,193 @@ td {
 }
 
 /* ===============================
-   EXTRA FESTIVE TOUCH
+   CHRISTMAS DECORATIONS
 ================================ */
-#gameInstruction h2 {
-  animation: pulse 1.5s infinite;
+.christmas-decoration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+.christmas-decoration > div {
+  position: absolute;
+  font-size: 2.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.christmas-tree { top: 15%; left: 5%; animation-delay: 0s; }
+.santa { top: 20%; right: 8%; animation-delay: 0.5s; }
+.reindeer { top: 60%; left: 3%; animation-delay: 1s; }
+.snowman { top: 70%; right: 5%; animation-delay: 1.5s; }
+.gift { top: 40%; left: 2%; animation-delay: 2s; }
+.star { top: 10%; left: 50%; animation-delay: 2.5s; }
+.bell { top: 80%; left: 50%; animation-delay: 3s; }
+.candy { top: 50%; right: 2%; animation-delay: 0.8s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+/* ===============================
+   FALLING SNOW
+================================ */
+.snowflakes {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.snowflake {
+  position: absolute;
+  color: #ffffff;
+  font-size: 1.5rem;
+  animation: fall linear infinite;
+}
+
+.snowflake:nth-child(1) { left: 10%; animation-duration: 8s; animation-delay: 0s; }
+.snowflake:nth-child(2) { left: 20%; animation-duration: 10s; animation-delay: 1s; }
+.snowflake:nth-child(3) { left: 30%; animation-duration: 7s; animation-delay: 2s; }
+.snowflake:nth-child(4) { left: 40%; animation-duration: 12s; animation-delay: 0.5s; }
+.snowflake:nth-child(5) { left: 50%; animation-duration: 9s; animation-delay: 1.5s; }
+.snowflake:nth-child(6) { left: 60%; animation-duration: 11s; animation-delay: 2.5s; }
+.snowflake:nth-child(7) { left: 70%; animation-duration: 8s; animation-delay: 3s; }
+.snowflake:nth-child(8) { left: 80%; animation-duration: 10s; animation-delay: 0.2s; }
+.snowflake:nth-child(9) { left: 90%; animation-duration: 7s; animation-delay: 1.8s; }
+.snowflake:nth-child(10) { left: 95%; animation-duration: 9s; animation-delay: 2.2s; }
+
+@keyframes fall {
+  from { top: -100px; transform: rotate(0deg); opacity: 1; }
+  to { top: 100vh; transform: rotate(360deg); opacity: 0.3; }
+}
+
+/* ===============================
+   CHRISTMAS BANNER
+================================ */
+.christmas-banner {
+  background: linear-gradient(45deg, #ff5252, #ffeb3b, #4CAF50, #ff5252);
+  background-size: 400% 400%;
+  animation: christmasGradient 3s ease infinite;
+  padding: 15px;
+  border-radius: 25px;
+  margin: 20px 0;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  border: 4px solid #fff;
+  box-shadow: 0 0 25px #ffeb3b;
+}
+
+.christmas-banner span {
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #fff;
+  text-shadow: 2px 2px 4px #000;
+  animation: sparkle 2s ease-in-out infinite;
+  margin: 5px;
+}
+
+@keyframes christmasGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* ===============================
+   ENHANCED CHRISTMAS STYLING
+================================ */
+#gameInstruction h2 {
+  animation: christmasGlow 2s ease-in-out infinite;
+}
+
+@keyframes christmasGlow {
+  0%, 100% { 
+    text-shadow: 0 0 15px #ff5252, 0 0 25px #ffeb3b; 
+    transform: scale(1);
+  }
+  50% { 
+    text-shadow: 0 0 25px #ff5252, 0 0 35px #ffeb3b, 0 0 45px #4CAF50; 
+    transform: scale(1.02);
+  }
+}
+
+/* Christmas cursor trail effect */
+body::after {
+  content: "✨";
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  animation: cursorTrail 1s linear infinite;
+  opacity: 0;
+}
+
+@keyframes cursorTrail {
+  0% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(0.5) rotate(180deg); }
+}
+
+/* Enhanced button Christmas effects */
+button:hover {
+  animation: christmasButtonGlow 0.5s ease-in-out;
+  box-shadow:
+    0 8px 0 #b71c1c,
+    0 0 35px #ffeb3b,
+    0 0 50px #ff5252;
+}
+
+@keyframes christmasButtonGlow {
+  0%, 100% { box-shadow: 0 6px 0 #b71c1c, 0 0 14px #ff5252; }
+  50% { box-shadow: 0 8px 0 #b71c1c, 0 0 35px #ffeb3b, 0 0 50px #ff5252; }
+}
+
+/* Christmas tree decoration for inputs */
+input:focus {
+  border-color: #4CAF50;
+  box-shadow: 
+    0 0 14px #ffeb3b,
+    0 0 25px #4CAF50,
+    inset 0 0 10px #ffffff44;
+  animation: inputChristmasGlow 2s ease-in-out infinite;
+}
+
+@keyframes inputChristmasGlow {
+  0%, 100% { box-shadow: 0 0 14px #ffeb3b, 0 0 25px #4CAF50; }
+  50% { box-shadow: 0 0 25px #ffeb3b, 0 0 35px #4CAF50, 0 0 45px #ff5252; }
+}
+
+/* Christmas loading spinner */
+.loading-christmas {
+  animation: christmasSpinner 1s linear infinite;
+}
+
+@keyframes christmasSpinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mistletoe decoration */
+.mistletoe {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 2rem;
+  animation: mistletoeSway 3s ease-in-out infinite;
+}
+
+@keyframes mistletoeSway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
 }
