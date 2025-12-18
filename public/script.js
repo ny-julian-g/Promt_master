@@ -1,7 +1,16 @@
-import { db } from "./firebase.js";
-import {
-  doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyB2rnjkUqZ7zsya8A4-NXjuu8_V2kmJRfQ",
+  authDomain: "promt-master1234.firebaseapp.com",
+  projectId: "promt-master1234",
+  storageBucket: "promt-master1234.firebasestorage.app",
+  messagingSenderId: "77863236164",
+  appId: "1:77863236164:web:754e9cf673890514a68211",
+  measurementId: "G-DV5YXT3QC2"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let gameId = null;
 let username = null;
@@ -26,7 +35,7 @@ document.getElementById("createGameBtn").onclick = async () => {
   username = "HOST";
   gameId = Math.floor(100000 + Math.random() * 900000).toString();
 
-  await setDoc(doc(db, "games", gameId), {
+  await db.collection("games").doc(gameId).set({
     players: [],
     roundActive: false,
     roundEndsAt: null,
