@@ -215,19 +215,39 @@ input:focus {
     margin: 15px 0;
 }
 
-/* Lobby Players */
-#lobbyPlayers {
+/* Player Lists */
+#lobbyPlayers, #gamePlayersList, #votingPlayersList {
     list-style: none;
     padding: 0;
-    margin: 20px 0;
+    margin: 15px 0;
 }
 
-#lobbyPlayers li {
+#lobbyPlayers li, #gamePlayersList li, #votingPlayersList li {
     background: #f0f0f0;
     margin: 5px 0;
-    padding: 10px;
+    padding: 10px 15px;
     border-radius: 8px;
     font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#lobbyPlayers li:hover, #gamePlayersList li:hover, #votingPlayersList li:hover {
+    background: #e8e8e8;
+}
+
+/* Players sections */
+#playersInGame, #playersInVoting {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+}
+
+#playersInGame h4, #playersInVoting h4 {
+    margin: 0 0 10px 0;
+    color: #555;
+    font-size: 16px;
 }
 
 /* Überschriften */

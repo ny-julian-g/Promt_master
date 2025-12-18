@@ -148,6 +148,59 @@ onSnapshot(
         li.innerText = p;
         list.appendChild(li);
       });
+    console.log("LIVE UPDATE:", gameData);
+    
+    // Update all player lists
+    if (gameData.players) {
+      // Update lobby players list (host view)
+      if (isHost) {
+        const lobbyPlayersList = document.getElementById("lobbyPlayers");
+        lobbyPlayersList.innerHTML = "";
+        gameData.players.forEach(player => {
+          const li = document.createElement("li");
+          li.innerText = player;
+          lobbyPlayersList.appendChild(li);
+        });
+      }
+      
+      // Update game screen players list
+      const gamePlayersList = document.getElementById("gamePlayersList");
+      if (gamePlayersList) {
+        gamePlayersList.innerHTML = "";
+        gameData.players.forEach(player => {
+          const li = document.createElement("li");
+          li.innerText = player;
+          // Highlight current player
+          if (player === userName) {
+            li.style.fontWeight = "bold";
+            li.style.color = "#2c5530";
+          }
+          gamePlayersList.appendChild(li);
+        });
+      }
+      
+      // Update voting screen players list
+      const votingPlayersList = document.getElementById("votingPlayersList");
+      if (votingPlayersList) {
+        votingPlayersList.innerHTML = "";
+        gameData.players.forEach(player => {
+          const li = document.createElement("li");
+          li.innerText = player;
+          
+          // Show who has voted
+          if (gameData.votes && gameData.votes[player]) {
+            li.innerText += " ✓";
+            li.style.color = "#4CAF50";
+          }
+          
+          // Highlight current player
+          if (player === userName) {
+            li.style.fontWeight = "bold";
+          }
+          
+          votingPlayersList.appendChild(li);
+        });
+      }
     }
 
     // Runde läuft
@@ -171,4 +224,6 @@ onSnapshot(
       }
     }
   }
+}
 );
+
