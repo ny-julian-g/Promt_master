@@ -5,32 +5,46 @@
   <title>Bild-Ähnlichkeit Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <h1>Bild Ähnlichkeit Game</h1>
 
 <div id="startScreen">
-  <button id="createGameBtn">Spiel erstellen</button>
+  <button id="createGameBtn">Spiel erstellen (Host)</button>
 
   <h3>Spiel beitreten</h3>
-  <input id="usernameInput" placeholder="Name eingeben">
-  <input id="joinCodeInput" placeholder="Teamcode eingeben">
+  <input
+    id="usernameInput"
+    placeholder="Dein Name"
+    required
+    minlength="2"
+  >
+  <input
+    id="joinCodeInput"
+    placeholder="Gruppencode"
+  >
   <button id="joinGameBtn">Beitreten</button>
 </div>
 
 <div id="hostLobby" class="hidden">
-  <h2>Teamcode:</h2>
+  <h2>Gruppencode:</h2>
   <div id="lobbyCode" class="codeBox"></div>
+
+  <h3>Spieler:</h3>
   <ul id="lobbyPlayers"></ul>
+
   <button id="startRoundBtn">Runde starten</button>
 </div>
 
 <div id="gameScreen" class="hidden">
   <p id="statusTxt"></p>
+
   <div id="uploadArea">
     <input type="file" id="imageUpload">
     <button id="uploadImageBtn">Bild hochladen</button>
   </div>
+
   <button id="stopRoundBtn" class="hidden">Runde beenden</button>
 </div>
 
@@ -42,7 +56,10 @@
   <h3 id="winnerName"></h3>
   <img id="winnerImage">
   <table id="resultsTable">
-    <tr><th>Spieler</th><th>Stimmen</th></tr>
+    <tr>
+      <th>Spieler</th>
+      <th>Stimmen</th>
+    </tr>
   </table>
   <button id="newRoundBtn">Neue Runde starten</button>
 </div>
