@@ -97,6 +97,7 @@ document.getElementById("createGameBtn").onclick = async () => {
     players: [],
     roundActive: false,
     uploadedImages: {},
+    ratings: {}, // New rating system
     votes: {},
     winner: null,
     templateImage: null,
@@ -649,82 +650,230 @@ document.getElementById("stopRoundBtn").onclick = async () => {
   resetHostImageUpload();
 };
 
-// Function to display all uploaded images for voting
-function displayAllImages(uploadedImages) {
+// Create star rating UI
+function createStarRating(playerName, currentRating = 0) {
+  const ratingDiv = document.createElement("div");
+  ratingDiv.className = "star-rating";
+  ratingDiv.style.textAlign = "center";
+  ratingDiv.style.margin = "10px 0";
+  
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement("span");
+    star.innerHTML = i <= currentRating ? "⭐" : "☆";
+    star.style.fontSize = "24px";
+    star.style.cursor = "pointer";
+    star.style.margin = "0 2px";
+    star.style.transition = "all 0.2s ease";
+    
+    star.onmouseover = () => {
+      // Highlight stars up to this one
+      const stars = ratingDiv.querySelectorAll("span");
+      stars.forEach((s, index) => {
+        s.innerHTML = index < i ? "⭐" : "☆";
+      });
+    };
+    
+    star.onmouseout = () => {
+      // Reset to current rating
+      const stars = ratingDiv.querySelectorAll("span");
+      stars.forEach((s, index) => {
+        s.innerHTML = index < currentRating ? "⭐" : "☆";
+      });
+    };
+    
+    star.onclick = async () => {
+      currentRating = i;
+      await saveRating(playerName, i);
+      
+      // Update display
+      const stars = ratingDiv.querySelectorAll("span");
+      stars.forEach((s, index) => {
+        s.innerHTML = index < i ? "⭐" : "☆";
+      });
+      
+      showNotification(`⭐ ${i} Sterne für ${playerName} vergeben!`, "success");
+    };
+    
+    ratingDiv.appendChild(star);
+  }
+  
+  return ratingDiv;
+}
+
+// Save rating to database
+async function saveRating(playerName, rating) {
+  try {
+    const ref = doc(db, "games", currentGameId);
+    const snap = await getDoc(ref);
+    const gameData = snap.data();
+    
+    const currentRatings = gameData.ratings || {};
+    
+    // Initialize player ratings if not exists
+    if (!currentRatings[playerName]) {
+      currentRatings[playerName] = {};
+    }
+    
+    // Save rating from current user
+    currentRatings[playerName][userName] = rating;
+    
+    await updateDoc(ref, {
+      ratings: currentRatings
+    });
+    
+  } catch (error) {
+    console.error('Error saving rating:', error);
+    showNotification("❌ Fehler beim Speichern der Bewertung", "error");
+  }
+}
+
+// Function to display all uploaded images for voting with ratings
+function displayAllImages(uploadedImages, ratings = {}) {
   const container = document.getElementById("votingContainer");
   container.innerHTML = "";
   
   Object.entries(uploadedImages).forEach(([playerName, imageData]) => {
     const imageDiv = document.createElement("div");
     imageDiv.className = "voting-item";
+    imageDiv.style.display = "inline-block";
+    imageDiv.style.margin = "15px";
+    imageDiv.style.padding = "15px";
+    imageDiv.style.border = "2px solid #e0e0e0";
+    imageDiv.style.borderRadius = "12px";
+    imageDiv.style.backgroundColor = "#fafafa";
+    imageDiv.style.textAlign = "center";
+    imageDiv.style.verticalAlign = "top";
     
     const img = document.createElement("img");
     img.src = imageData;
     img.alt = `Bild von ${playerName}`;
     img.style.maxWidth = "200px";
     img.style.maxHeight = "200px";
-    img.style.margin = "10px";
-    img.style.cursor = "pointer";
-    img.style.border = "2px solid #ccc";
     img.style.borderRadius = "8px";
+    img.style.display = "block";
+    img.style.margin = "0 auto 10px auto";
     
-    const label = document.createElement("p");
+    const label = document.createElement("h4");
     label.innerText = playerName;
-    label.style.textAlign = "center";
-    label.style.margin = "5px";
+    label.style.margin = "10px 0";
+    label.style.color = "#333";
     
-    // Add click handler for voting
-    img.onclick = async () => {
-      const ref = doc(db, "games", currentGameId);
-      const snap = await getDoc(ref);
-      const gameData = snap.data();
-      
-      await updateDoc(ref, {
-        votes: {
-          ...gameData.votes,
-          [userName]: playerName
-        }
-      });
-      
-      // Visual feedback
-      document.querySelectorAll('.voting-item img').forEach(i => {
-        i.style.border = "2px solid #ccc";
-      });
-      img.style.border = "3px solid #4CAF50";
-    };
+    // Show current user's rating for this player
+    const currentUserRating = (ratings[playerName] && ratings[playerName][userName]) || 0;
+    
+    // Create star rating
+    const starRating = createStarRating(playerName, currentUserRating);
+    
+    // Show average rating
+    const avgDiv = document.createElement("div");
+    avgDiv.style.fontSize = "14px";
+    avgDiv.style.color = "#666";
+    avgDiv.style.marginTop = "5px";
+    
+    if (ratings[playerName]) {
+      const ratingValues = Object.values(ratings[playerName]);
+      const average = ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length;
+      avgDiv.innerHTML = `⭐ ${average.toFixed(1)} (${ratingValues.length} Bewertungen)`;
+    } else {
+      avgDiv.innerHTML = "Noch keine Bewertungen";
+    }
     
     imageDiv.appendChild(img);
     imageDiv.appendChild(label);
+    imageDiv.appendChild(starRating);
+    imageDiv.appendChild(avgDiv);
     container.appendChild(imageDiv);
   });
 }
 
-// Function to show results
+// Function to show results with ratings
 function displayResults(gameData) {
   if (!isHost) return;
   
-  const voteCounts = {};
-  Object.values(gameData.votes || {}).forEach(vote => {
-    voteCounts[vote] = (voteCounts[vote] || 0) + 1;
+  const ratings = gameData.ratings || {};
+  const playerScores = {};
+  
+  // Calculate scores for each player
+  Object.keys(gameData.uploadedImages || {}).forEach(playerName => {
+    const playerRatings = ratings[playerName] || {};
+    const ratingValues = Object.values(playerRatings);
+    
+    if (ratingValues.length > 0) {
+      const average = ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length;
+      const totalPoints = ratingValues.reduce((a, b) => a + b, 0);
+      
+      playerScores[playerName] = {
+        average: average,
+        count: ratingValues.length,
+        total: totalPoints,
+        ratings: ratingValues
+      };
+    } else {
+      playerScores[playerName] = {
+        average: 0,
+        count: 0,
+        total: 0,
+        ratings: []
+      };
+    }
   });
   
-  const winner = Object.keys(voteCounts).reduce((a, b) => 
-    voteCounts[a] > voteCounts[b] ? a : b
-  );
+  // Find winner (highest average, then highest total)
+  const winner = Object.keys(playerScores).reduce((a, b) => {
+    const scoreA = playerScores[a];
+    const scoreB = playerScores[b];
+    
+    if (scoreA.average !== scoreB.average) {
+      return scoreA.average > scoreB.average ? a : b;
+    }
+    return scoreA.total > scoreB.total ? a : b;
+  });
   
-  document.getElementById("winnerName").innerText = `Gewinner: ${winner}`;
-  document.getElementById("winnerImage").src = gameData.uploadedImages[winner];
+  // Display winner
+  if (winner && gameData.uploadedImages[winner]) {
+    const winnerScore = playerScores[winner];
+    document.getElementById("winnerName").innerText = 
+      `🏆 Gewinner: ${winner} (⭐ ${winnerScore.average.toFixed(1)} Sterne)`;
+    document.getElementById("winnerImage").src = gameData.uploadedImages[winner];
+  }
   
+  // Update results table
   const table = document.getElementById("resultsTable");
   // Keep header, remove only data rows
   while(table.rows.length > 1) {
     table.deleteRow(1);
   }
   
-  Object.entries(voteCounts).forEach(([player, votes]) => {
+  // Sort players by score (average, then total)
+  const sortedPlayers = Object.entries(playerScores).sort(([,a], [,b]) => {
+    if (a.average !== b.average) return b.average - a.average;
+    return b.total - a.total;
+  });
+  
+  sortedPlayers.forEach(([player, score]) => {
     const row = table.insertRow();
-    row.insertCell().innerText = player;
-    row.insertCell().innerText = votes;
+    
+    // Player name with trophy for winner
+    const nameCell = row.insertCell();
+    nameCell.innerText = player === winner ? `🏆 ${player}` : player;
+    
+    // Average rating
+    const avgCell = row.insertCell();
+    avgCell.innerText = score.average > 0 ? `⭐ ${score.average.toFixed(1)}` : "0.0";
+    
+    // Individual ratings
+    const ratingsCell = row.insertCell();
+    ratingsCell.innerText = score.ratings.length > 0 ? score.ratings.join(", ") : "Keine";
+    
+    // Total points
+    const pointsCell = row.insertCell();
+    pointsCell.innerText = score.total;
+    
+    // Highlight winner row
+    if (player === winner) {
+      row.style.backgroundColor = "#fff3cd";
+      row.style.fontWeight = "bold";
+    }
   });
   
   document.getElementById("votingSection").classList.add("hidden");
@@ -892,7 +1041,7 @@ function setupGameListener() {
     
     // Display all uploaded images in real-time
     if (gameData.uploadedImages && Object.keys(gameData.uploadedImages).length > 0) {
-      displayAllImages(gameData.uploadedImages);
+      displayAllImages(gameData.uploadedImages, gameData.ratings || {});
       
       // Show stop round button for host when images are uploaded
       if (isHost && gameData.roundActive) {
@@ -905,11 +1054,19 @@ function setupGameListener() {
       document.getElementById("gameScreen").classList.add("hidden");
       document.getElementById("votingSection").classList.remove("hidden");
       
-      // Show results when all players have voted
+      // Show results when all players have rated (check ratings instead of votes)
       const totalPlayers = gameData.players?.length || 0;
-      const totalVotes = Object.keys(gameData.votes || {}).length;
+      const ratings = gameData.ratings || {};
       
-      if (totalVotes === totalPlayers) {
+      // Count how many players have rated at least one image
+      const playersWhoRated = new Set();
+      Object.values(ratings).forEach(playerRatings => {
+        Object.keys(playerRatings).forEach(raterName => {
+          playersWhoRated.add(raterName);
+        });
+      });
+      
+      if (playersWhoRated.size === totalPlayers) {
         displayResults(gameData);
       }
     }
