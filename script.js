@@ -181,13 +181,9 @@ document.getElementById("joinGameBtn").onclick = async () => {
   // Show "Runde beigetreten" message first
   showNotification("🎄 Runde beigetreten! 🎅", "success");
   
+  // Show waiting screen instead of game screen
   document.getElementById("startScreen").classList.add("hidden");
-  document.getElementById("gameScreen").classList.remove("hidden");
-  document.getElementById("uploadArea").classList.add("hidden");
-  document.getElementById("hostTemplateImage").classList.add("hidden");
-  document.getElementById("promptArea").classList.add("hidden");
-  
-  document.getElementById("statusTxt").innerText = "🎄 Warte bis Santa (Host) die Runde startet... 🎅";
+  document.getElementById("waitingScreen").classList.remove("hidden");
   
   setupGameListener();
 };
@@ -952,6 +948,19 @@ function setupGameListener() {
         });
       }
       
+      // Update waiting screen players list (for joined players)
+      const waitingPlayersList = document.getElementById("waitingPlayersList");
+      if (waitingPlayersList) {
+        waitingPlayersList.innerHTML = "";
+        gameData.players.forEach(player => {
+          if (player !== userName) { // Don't show self in "other players" list
+            const li = document.createElement("li");
+            li.innerText = player;
+            waitingPlayersList.appendChild(li);
+          }
+        });
+      }
+      
       // Update game screen players list
       const gamePlayersList = document.getElementById("gamePlayersList");
       if (gamePlayersList) {
@@ -1016,6 +1025,7 @@ function setupGameListener() {
       // Hide all other screens
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("hostLobby").classList.add("hidden");
+      document.getElementById("waitingScreen").classList.add("hidden");
       document.getElementById("votingSection").classList.add("hidden");
       document.getElementById("adminResults").classList.add("hidden");
       
