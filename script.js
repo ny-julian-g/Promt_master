@@ -1,176 +1,140 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { db } from "./firebase.js";
 import {
-  getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot
+  doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* 🔥 Firebase CONFIG */
-const firebaseConfig = {
-  apiKey: "XXX",
-  authDomain: "XXX",
-  projectId: "XXX",
-  storageBucket: "XXX",
-  messagingSenderId: "XXX",
-  appId: "XXX"
-};
+const $ = id => document.getElementById(id);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* GLOBALS */
 let gameId = null;
-let userName = null;
+let username = null;
 let isHost = false;
-let timerInterval = null;
 
-/* ELEMENTS */
-const startScreen = document.getElementById("startScreen");
-const hostLobby = document.getElementById("hostLobby");
-const gameScreen = document.getElementById("gameScreen");
-
-const lobbyCode = document.getElementById("lobbyCode");
-const playerList = document.getElementById("playerList");
-const timerText = document.getElementById("timerText");
-
-const startRoundBtn = document.getElementById("startRoundBtn");
-const stopRoundBtn = document.getElementById("stopRoundBtn");
-
-/* -----------------------------------
-   CREATE GAME (HOST)
------------------------------------ */
-document.getElementById("createGameBtn").onclick = async () => {
-  gameId = Math.floor(100000 + Math.random() * 900000).toString();
+/* ---------- CREATE ---------- */
+$("createGameBtn").onclick = async () => {
   isHost = true;
+  username = "Host";
+  gameId = Math.floor(100000 + Math.random() * 900000).toString();
 
   await setDoc(doc(db, "games", gameId), {
     players: [],
     roundActive: false,
-    roundEnd: null,
     images: {},
     votes: {},
     winner: null
   });
 
-  startScreen.classList.add("hidden");
-  hostLobby.classList.remove("hidden");
-  lobbyCode.textContent = gameId;
+  $("startScreen").classList.add("hidden");
+  $("hostLobby").classList.remove("hidden");
+  $("lobbyCode").innerText = gameId;
 
-  listenGame();
+  listen();
 };
 
-/* -----------------------------------
-   JOIN GAME
------------------------------------ */
-document.getElementById("joinGameBtn").onclick = async () => {
-  const code = joinCodeInput.value.trim();
-  userName = usernameInput.value.trim();
+/* ---------- JOIN ---------- */
+$("joinGameBtn").onclick = async () => {
+  username = $("usernameInput").value.trim();
+  gameId = $("joinCodeInput").value.trim();
 
-  const ref = doc(db, "games", code);
+  const ref = doc(db, "games", gameId);
   const snap = await getDoc(ref);
-  if (!snap.exists()) return alert("Spiel existiert nicht");
+  if (!snap.exists()) return alert("Spiel nicht gefunden");
 
-  gameId = code;
+  await updateDoc(ref, { players: arrayUnion(username) });
 
-  await updateDoc(ref, {
-    players: [...snap.data().players, userName]
-  });
+  $("startScreen").classList.add("hidden");
+  $("gameScreen").classList.remove("hidden");
 
-  startScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
-
-  listenGame();
+  listen();
 };
 
-/* -----------------------------------
-   START ROUND + TIMER
------------------------------------ */
-startRoundBtn.onclick = async () => {
-  const endTime = Date.now() + 60000; // 60 Sekunden
-
-  await updateDoc(doc(db, "games", gameId), {
-    roundActive: true,
-    roundEnd: endTime,
-    images: {},
-    votes: {},
-    winner: null
-  });
-
-  stopRoundBtn.classList.remove("hidden");
-};
-
-/* -----------------------------------
-   STOP ROUND MANUALLY
------------------------------------ */
-stopRoundBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", gameId), {
-    roundActive: false,
-    roundEnd: null
-  });
-};
-
-/* -----------------------------------
-   IMAGE UPLOAD
------------------------------------ */
-uploadImageBtn.onclick = async () => {
-  if (isHost) return;
-
-  const file = imageUpload.files[0];
-  if (!file) return alert("Bild wählen");
-
-  const reader = new FileReader();
-  reader.onload = async () => {
-    await updateDoc(doc(db, "games", gameId), {
-      [`images.${userName}`]: reader.result
-    });
-    gameScreen.innerHTML = "<p>Bild hochgeladen ✔</p>";
-  };
-  reader.readAsDataURL(file);
-};
-
-/* -----------------------------------
-   GAME LISTENER
------------------------------------ */
-function listenGame() {
+/* ---------- LISTENER ---------- */
+function listen() {
   onSnapshot(doc(db, "games", gameId), snap => {
-    const data = snap.data();
-    if (!data) return;
+    const d = snap.data();
+    if (!d) return;
 
-    /* HOST: Spieler anzeigen */
-    if (isHost) {
-      playerList.innerHTML = "";
-      data.players.forEach(p => {
-        const li = document.createElement("li");
-        li.textContent = p;
-        playerList.appendChild(li);
-      });
+    $("lobbyPlayers").innerHTML = "";
+    d.players.forEach(p => {
+      const li = document.createElement("li");
+      li.innerText = p;
+      $("lobbyPlayers").appendChild(li);
+    });
+
+    $("statusTxt").innerText = d.roundActive ? "Runde läuft" : "Warten";
+
+    if (!d.roundActive && Object.keys(d.images).length && !d.winner) {
+      showVoting(d);
     }
 
-    /* TIMER */
-    if (data.roundActive && data.roundEnd) {
-      startTimer(data.roundEnd);
-    }
-
-    /* AUTO STOP */
-    if (data.roundActive && Date.now() > data.roundEnd) {
-      updateDoc(doc(db, "games", gameId), {
-        roundActive: false,
-        roundEnd: null
-      });
-    }
+    if (d.winner) showResult(d);
   });
 }
 
-/* -----------------------------------
-   TIMER UI
------------------------------------ */
-function startTimer(endTime) {
-  clearInterval(timerInterval);
+/* ---------- ROUND ---------- */
+$("startRoundBtn").onclick = async () => {
+  await updateDoc(doc(db, "games", gameId), {
+    roundActive: true,
+    images: {},
+    votes: {},
+    winner: null
+  });
+  $("stopRoundBtn").classList.remove("hidden");
+};
 
-  timerInterval = setInterval(() => {
-    const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-    timerText.textContent = `Zeit: ${remaining}s`;
+$("stopRoundBtn").onclick = async () => {
+  await updateDoc(doc(db, "games", gameId), { roundActive: false });
+};
 
-    if (remaining <= 0) {
-      clearInterval(timerInterval);
-    }
-  }, 1000);
+/* ---------- UPLOAD ---------- */
+$("uploadImageBtn").onclick = async () => {
+  const file = $("imageUpload").files[0];
+  if (!file) return;
+
+  const r = new FileReader();
+  r.onload = async () => {
+    await updateDoc(doc(db, "games", gameId), {
+      [`images.${username}`]: r.result
+    });
+    $("uploadImageBtn").disabled = true;
+  };
+  r.readAsDataURL(file);
+};
+
+/* ---------- VOTING ---------- */
+function showVoting(data) {
+  $("votingSection").classList.remove("hidden");
+  $("votingContainer").innerHTML = "";
+
+  if (isHost) return;
+
+  Object.entries(data.images).forEach(([name, img]) => {
+    if (name === username) return;
+
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <img src="${img}" width="200">
+      <button>Für ${name}</button>
+    `;
+    div.querySelector("button").onclick = async () => {
+      await updateDoc(doc(db, "games", gameId), {
+        [`votes.${username}`]: name
+      });
+      $("votingContainer").innerHTML = "Danke fürs Abstimmen ✔";
+    };
+    $("votingContainer").appendChild(div);
+  });
+}
+
+/* ---------- RESULT ---------- */
+function showResult(data) {
+  $("resultScreen").classList.remove("hidden");
+
+  const counts = {};
+  Object.values(data.votes).forEach(v => counts[v] = (counts[v] || 0) + 1);
+
+  const winner = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
+  updateDoc(doc(db, "games", gameId), { winner });
+
+  $("winnerName").innerText = winner;
+  $("winnerImage").src = data.images[winner];
 }

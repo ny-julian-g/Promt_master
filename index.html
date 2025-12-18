@@ -15,29 +15,26 @@
   <button id="createGameBtn">Spiel erstellen</button>
 
   <h3>Spiel beitreten</h3>
-  <input id="usernameInput" placeholder="Name eingeben">
-  <input id="joinCodeInput" placeholder="Teamcode">
+  <input id="usernameInput" placeholder="Name">
+  <input id="joinCodeInput" placeholder="Code">
   <button id="joinGameBtn">Beitreten</button>
 </div>
 
-<!-- HOST LOBBY -->
+<!-- HOST -->
 <div id="hostLobby" class="hidden">
-  <h2>Teamcode</h2>
+  <h2>Code:</h2>
   <div id="lobbyCode" class="codeBox"></div>
 
-  <h3>Beigetretene Spieler</h3>
-  <ul id="playerList"></ul>
+  <h3>Spieler</h3>
+  <ul id="lobbyPlayers"></ul>
 
-  <button id="startRoundBtn">Runde starten (60s)</button>
+  <button id="startRoundBtn">Runde starten</button>
   <button id="stopRoundBtn" class="hidden">Runde beenden</button>
-
-  <p id="timerText"></p>
 </div>
 
-<!-- PLAYER -->
+<!-- GAME -->
 <div id="gameScreen" class="hidden">
-  <p id="statusText"></p>
-
+  <p id="statusTxt"></p>
   <input type="file" id="imageUpload">
   <button id="uploadImageBtn">Bild hochladen</button>
 </div>
@@ -49,7 +46,7 @@
 </div>
 
 <!-- RESULT -->
-<div id="resultSection" class="hidden">
+<div id="resultScreen" class="hidden">
   <h2>Gewinner</h2>
   <img id="winnerImage">
   <h3 id="winnerName"></h3>
