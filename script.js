@@ -6,6 +6,8 @@ import {
 let currentGameId = null;
 let userName = null;
 let isHost = false;
+let gameTimer = null;
+let timeRemaining = 90; // 1.5 minutes in seconds
 
 document.getElementById("createGameBtn").onclick = async () => {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -17,7 +19,9 @@ document.getElementById("createGameBtn").onclick = async () => {
     roundActive: false,
     uploadedImages: {},
     votes: {},
-    winner: null
+    winner: null,
+    templateImage: null,
+    timeLeft: 90
   });
 
   document.getElementById("startScreen").classList.add("hidden");
@@ -25,6 +29,35 @@ document.getElementById("createGameBtn").onclick = async () => {
   document.getElementById("lobbyCode").innerText = code;
   
   setupGameListener();
+};
+
+// Host image upload handler
+document.getElementById("uploadHostImageBtn").onclick = async () => {
+  if (!isHost) return;
+  
+  const fileInput = document.getElementById("hostImageInput");
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    alert("Bitte wähle ein Vorlage-Bild aus");
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const imageData = e.target.result;
+    
+    await updateDoc(doc(db, "games", currentGameId), {
+      templateImage: imageData
+    });
+    
+    document.getElementById("startRoundBtn").classList.remove("hidden");
+    document.getElementById("hostImageUpload").style.opacity = "0.5";
+    document.getElementById("uploadHostImageBtn").disabled = true;
+    alert("Vorlage-Bild hochgeladen! Du kannst jetzt die Runde starten.");
+  };
+  
+  reader.readAsDataURL(file);
 };
 
 document.getElementById("joinGameBtn").onclick = async () => {
@@ -63,6 +96,59 @@ document.getElementById("joinGameBtn").onclick = async () => {
   setupGameListener();
 };
 
+// Timer functions
+function startGameTimer() {
+  timeRemaining = 90; // Reset to 1.5 minutes
+  updateTimerDisplay();
+  
+  gameTimer = setInterval(() => {
+    timeRemaining--;
+    updateTimerDisplay();
+    
+    // Update time in Firebase for all players
+    if (isHost) {
+      updateDoc(doc(db, "games", currentGameId), {
+        timeLeft: timeRemaining
+      });
+    }
+    
+    if (timeRemaining <= 0) {
+      clearInterval(gameTimer);
+      if (isHost) {
+        // Auto end round when time is up
+        document.getElementById("stopRoundBtn").click();
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeRemaining / 60);
+  const seconds = timeRemaining % 60;
+  const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  
+  const timerElement = document.getElementById("timer");
+  if (timerElement) {
+    timerElement.innerText = `Zeit: ${timeString}`;
+    
+    // Color changes based on time remaining
+    if (timeRemaining <= 30) {
+      timerElement.style.color = "#d32f2f"; // Red
+    } else if (timeRemaining <= 60) {
+      timerElement.style.color = "#ff9800"; // Orange
+    } else {
+      timerElement.style.color = "#1976d2"; // Blue
+    }
+  }
+}
+
+function stopGameTimer() {
+  if (gameTimer) {
+    clearInterval(gameTimer);
+    gameTimer = null;
+  }
+}
+
 // Start round button handler
 document.getElementById("startRoundBtn").onclick = async () => {
   if (!isHost) return;
@@ -71,12 +157,15 @@ document.getElementById("startRoundBtn").onclick = async () => {
     roundActive: true,
     uploadedImages: {},
     votes: {},
-    winner: null
+    winner: null,
+    timeLeft: 90
   });
   
   document.getElementById("hostLobby").classList.add("hidden");
   document.getElementById("gameScreen").classList.remove("hidden");
   document.getElementById("statusTxt").innerText = "Runde gestartet! Warte auf Bilder...";
+  
+  startGameTimer();
 };
 
 // Image upload handler
@@ -119,6 +208,8 @@ document.getElementById("uploadImageBtn").onclick = async () => {
 // Stop round button handler
 document.getElementById("stopRoundBtn").onclick = async () => {
   if (!isHost) return;
+  
+  stopGameTimer(); // Stop the timer
   
   await updateDoc(doc(db, "games", currentGameId), {
     roundActive: false
@@ -218,13 +309,16 @@ document.getElementById("newRoundBtn").onclick = async () => {
     roundActive: true,
     uploadedImages: {},
     votes: {},
-    winner: null
+    winner: null,
+    timeLeft: 90
   });
   
   document.getElementById("adminResults").classList.add("hidden");
   document.getElementById("gameScreen").classList.remove("hidden");
   document.getElementById("statusTxt").innerText = "Neue Runde gestartet! Warte auf Bilder...";
   document.getElementById("stopRoundBtn").classList.add("hidden");
+  
+  startGameTimer(); // Restart timer
 };
 
 // Real-time listener function
@@ -289,6 +383,23 @@ function setupGameListener() {
       }
     }
     
+    // Display template image when available
+    if (gameData.templateImage) {
+      const templateImg = document.getElementById("templateImage");
+      const hostTemplateDiv = document.getElementById("hostTemplateImage");
+      
+      if (templateImg && hostTemplateDiv) {
+        templateImg.src = gameData.templateImage;
+        hostTemplateDiv.classList.remove("hidden");
+      }
+    }
+    
+    // Update timer for all players
+    if (gameData.timeLeft !== undefined && !isHost) {
+      timeRemaining = gameData.timeLeft;
+      updateTimerDisplay();
+    }
+
     // Handle round start for all players
     if (gameData.roundActive) {
       console.log("Round is active - switching to game screen");
@@ -302,11 +413,17 @@ function setupGameListener() {
       // Show game screen for everyone
       document.getElementById("gameScreen").classList.remove("hidden");
       
+      // Show template image and instructions for all players
+      if (gameData.templateImage) {
+        document.getElementById("hostTemplateImage").classList.remove("hidden");
+        document.getElementById("templateImage").src = gameData.templateImage;
+      }
+      
       if (isHost) {
-        document.getElementById("statusTxt").innerText = "Runde gestartet! Warte auf Bilder...";
+        document.getElementById("statusTxt").innerText = "Runde läuft! Warte auf Bilder der Spieler...";
         document.getElementById("uploadArea").classList.add("hidden");
       } else {
-        document.getElementById("statusTxt").innerText = "Runde läuft! Lade dein Bild hoch.";
+        document.getElementById("statusTxt").innerText = "Erstelle dein Bild basierend auf der Vorlage!";
         // Reset upload area visibility if round restarted
         if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
           document.getElementById("uploadArea").classList.remove("hidden");
