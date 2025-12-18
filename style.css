@@ -1,273 +1,267 @@
-/* Reset & Grundlayout */
+/* ===============================
+   GOOGLE FONTS
+================================ */
+@import url('https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@300;600;800&display=swap');
+
+/* ===============================
+   RESET & GLOBAL
+================================ */
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
-    background:
-            radial-gradient(circle at top, rgba(255,255,255,0.9), rgba(240,240,240,1)),
-            linear-gradient(180deg, #f6f6f6, #e8e8e8);
-    color: #333;
-    text-align: center;
-    margin: 0;
-    padding: 40px 20px;
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Nunito", sans-serif;
+  background:
+    radial-gradient(circle at top, #ffffff55, transparent 60%),
+    linear-gradient(135deg, #0b3d2e, #1b5e20);
+  color: #fff;
+  text-align: center;
+  padding: 25px;
+  overflow-x: hidden;
 }
 
-/* ❄️ Dezente Schneeflocken im Hintergrund */
+/* Schneeflocken */
 body::before {
-    content: "❄ ❄ ❄ ❄ ❄";
-    position: fixed;
-    top: 15px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 22px;
-    opacity: 0.25;
-    pointer-events: none;
-    letter-spacing: 25px;
+  content: "❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄ ❄";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  font-size: 26px;
+  opacity: 0.18;
+  pointer-events: none;
 }
 
-/* Versteckte Elemente */
+/* Lichterkette */
+body::after {
+  content: "💡 💡 💡 💡 💡 💡 💡 💡 💡 💡 💡 💡";
+  position: fixed;
+  top: 6px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 28px;
+  opacity: 0.9;
+}
+
+/* ===============================
+   HEADINGS
+================================ */
+h1 {
+  font-family: "Mountains of Christmas", cursive;
+  font-size: 3.4rem;
+  color: #ffeb3b;
+  text-shadow:
+    0 0 10px #ff5252,
+    0 0 25px #ff1744;
+  margin-bottom: 35px;
+}
+
+h2, h3, h4 {
+  color: #ffeb3b;
+  text-shadow: 0 0 8px #ff5252;
+}
+
+/* ===============================
+   CONTAINERS
+================================ */
+#startScreen,
+#hostLobby,
+#gameScreen,
+#votingSection,
+#adminResults {
+  background:
+    linear-gradient(145deg, #1e7f4f, #145a32);
+  border: 4px solid #ff5252;
+  border-radius: 22px;
+  padding: 28px;
+  margin: 25px auto;
+  max-width: 760px;
+  box-shadow:
+    0 0 25px #ff174455,
+    inset 0 0 15px #ffffff22;
+}
+
+/* ===============================
+   HIDDEN
+================================ */
 .hidden {
-    display: none;
+  display: none;
 }
 
-/* Karten-Layout */
-.container {
-    max-width: 900px;
-    margin: auto;
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 45px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
-    position: relative;
-}
-
-/* 🎄 Feine Weihnachtslinie */
-.container::before {
-    content: "🎄 ✨ 🎄";
-    position: absolute;
-    top: -18px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #ffffff;
-    padding: 0 14px;
-    font-size: 18px;
-    opacity: 0.85;
-}
-
-/* Buttons */
+/* ===============================
+   BUTTONS
+================================ */
 button {
-    padding: 14px 32px;
-    font-size: 17px;
-    font-weight: 600;
-    margin-top: 15px;
-    border: none;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #2f2f2f, #444);
-    color: #ffffff;
-    cursor: pointer;
-    transition: all 0.25s ease;
+  font-family: "Nunito", sans-serif;
+  font-size: 1.05rem;
+  padding: 14px 26px;
+  margin: 10px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  background:
+    linear-gradient(135deg, #ff5252, #ff1744);
+  color: white;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow:
+    0 6px 0 #b71c1c,
+    0 0 14px #ff5252;
+  transition: all 0.15s ease;
 }
 
 button:hover {
-    background: linear-gradient(135deg, #444, #555);
-    transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.07);
+  box-shadow:
+    0 8px 0 #b71c1c,
+    0 0 25px #ffeb3b;
 }
 
 button:active {
-    transform: translateY(0);
+  transform: translateY(3px);
+  box-shadow:
+    0 3px 0 #b71c1c;
 }
 
-/* Inputs */
+/* ===============================
+   INPUTS
+================================ */
 input {
-    padding: 14px;
-    font-size: 16px;
-    width: 100%;
-    max-width: 300px;
-    margin-top: 10px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    background: #fafafa;
-    transition: border 0.2s ease, box-shadow 0.2s ease;
+  padding: 12px 18px;
+  border-radius: 30px;
+  border: 3px solid #ffeb3b;
+  margin: 10px;
+  font-size: 1rem;
+  outline: none;
+  background: #ffffffee;
 }
 
 input:focus {
-    outline: none;
-    border-color: #999;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 14px #ffeb3b;
 }
 
-/* 🎁 Code Box */
+/* ===============================
+   CODE BOX
+================================ */
 .codeBox {
-    font-size: 52px;
-    font-weight: 700;
-    letter-spacing: 6px;
-    background: linear-gradient(135deg, #f4f4f4, #e3e3e3);
-    color: #222;
-    padding: 28px 40px;
-    border-radius: 18px;
-    display: inline-block;
-    margin: 25px 0;
-    box-shadow:
-            inset 0 2px 6px rgba(255, 255, 255, 0.7),
-            inset 0 -2px 6px rgba(0, 0, 0, 0.06),
-            0 12px 30px rgba(0, 0, 0, 0.12);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #ffeb3b;
+  background: #b71c1c;
+  border-radius: 16px;
+  padding: 18px;
+  margin: 18px auto;
+  width: fit-content;
+  box-shadow:
+    inset 0 0 12px #00000055,
+    0 0 18px #ff5252;
 }
 
-/* Voting Container */
-#votingContainer {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 22px;
-    margin-top: 35px;
+/* ===============================
+   PLAYER LISTS
+================================ */
+ul {
+  list-style: none;
+  padding: 0;
 }
 
-.voting-item {
-    text-align: center;
+li {
+  background:
+    linear-gradient(135deg, #ffeb3b, #ffc107);
+  color: #1b5e20;
+  margin: 8px auto;
+  padding: 10px 18px;
+  border-radius: 30px;
+  max-width: 320px;
+  font-weight: 800;
+  box-shadow: 0 0 12px #ffeb3b88;
 }
 
-.voting-item img {
-    width: 220px;
-    height: 220px;
-    border-radius: 16px;
-    object-fit: cover;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    cursor: pointer;
-    border: 2px solid #ccc;
+/* ===============================
+   UPLOAD AREA
+================================ */
+#uploadArea,
+#hostImageUpload {
+  border: 3px dashed #ffeb3b;
+  border-radius: 22px;
+  padding: 22px;
+  margin: 22px 0;
+  background: #ffffff22;
 }
 
-.voting-item img:hover {
-    transform: scale(1.06);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-    border-color: #888;
+/* ===============================
+   IMAGES
+================================ */
+img {
+  max-width: 100%;
+  border-radius: 18px;
+  border: 4px solid #ff5252;
+  box-shadow:
+    0 0 18px #ff5252,
+    0 0 35px #ffeb3b55;
+  margin: 12px;
 }
 
-.voting-item p {
-    margin-top: 8px;
-    font-weight: 600;
-    color: #333;
+/* ===============================
+   TIMER
+================================ */
+#timer {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffeb3b !important;
+  text-shadow: 0 0 10px #ff1744;
 }
 
-/* Upload Area */
-#uploadArea {
-    margin: 20px 0;
-    padding: 20px;
-    border: 2px dashed #ccc;
-    border-radius: 12px;
-    background: #fafafa;
-}
-
-#uploadArea input[type="file"] {
-    margin: 10px 0;
-}
-
-/* Status Text */
+/* ===============================
+   STATUS TEXT
+================================ */
 #statusTxt {
-    font-size: 18px;
-    font-weight: 600;
-    color: #444;
-    margin: 15px 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffeb3b;
+  text-shadow: 0 0 12px #ff1744;
 }
 
-/* Results Table */
-#resultsTable {
-    margin: 20px auto;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+/* ===============================
+   RESULTS TABLE
+================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
 
-#resultsTable th, #resultsTable td {
-    padding: 12px 20px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+th, td {
+  padding: 12px;
+  border-bottom: 2px solid #ffeb3b;
 }
 
-#resultsTable th {
-    background: #f5f5f5;
-    font-weight: 600;
+th {
+  background: #ff5252;
+  color: white;
+  text-transform: uppercase;
 }
 
-/* Winner Display */
-#adminResults {
-    text-align: center;
-    margin: 30px 0;
+td {
+  background: #ffffffdd;
+  color: #1b5e20;
+  font-weight: 800;
 }
 
-#winnerImage {
-    max-width: 300px;
-    max-height: 300px;
-    border-radius: 16px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    margin: 20px 0;
+/* ===============================
+   EXTRA FESTIVE TOUCH
+================================ */
+#gameInstruction h2 {
+  animation: pulse 1.5s infinite;
 }
 
-#winnerName {
-    font-size: 24px;
-    font-weight: 700;
-    color: #2c5530;
-    margin: 15px 0;
-}
-
-/* Player Lists */
-#lobbyPlayers, #gamePlayersList, #votingPlayersList {
-    list-style: none;
-    padding: 0;
-    margin: 15px 0;
-}
-
-#lobbyPlayers li, #gamePlayersList li, #votingPlayersList li {
-    background: #f0f0f0;
-    margin: 5px 0;
-    padding: 10px 15px;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: background-color 0.2s ease;
-}
-
-#lobbyPlayers li:hover, #gamePlayersList li:hover, #votingPlayersList li:hover {
-    background: #e8e8e8;
-}
-
-/* Players sections */
-#playersInGame, #playersInVoting {
-    background: #fafafa;
-    border-radius: 10px;
-    padding: 15px;
-    margin: 20px 0;
-    border: 1px solid #eee;
-}
-
-#playersInGame h4, #playersInVoting h4 {
-    margin: 0 0 10px 0;
-    color: #555;
-    font-size: 16px;
-}
-
-/* Überschriften */
-h1, h2, h3 {
-    font-weight: 700;
-    color: #222;
-    margin-bottom: 22px;
-}
-
-/* 🎄 Weihnachts-Accent für Titel */
-h1::after {
-    content: " ❄️";
-    font-size: 22px;
-    opacity: 0.8;
-}
-
-/* Text */
-p {
-    color: #555;
-    line-height: 1.6;
-    max-width: 620px;
-    margin: 12px auto;
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
