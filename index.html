@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Bild Ähnlichkeit  Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Bild Ähnlichkeit Game</h1>
+
+<div id="startScreen">
+  <button id="createGameBtn">Spiel erstellen</button>
+
+  <h3>Spiel beitreten</h3>
+  <input id="usernameInput" placeholder="Name eingeben">
+  <input id="joinCodeInput" placeholder="Teamcode eingeben">
+  <button id="joinGameBtn">Beitreten</button>
+</div>
+
+<div id="hostLobby" class="hidden">
+  <h2>Teamcode:</h2>
+  <div id="lobbyCode" class="codeBox"></div>
+  <ul id="lobbyPlayers"></ul>
+  <button id="startRoundBtn">Runde starten</button>
+</div>
+
+<div id="gameScreen" class="hidden">
+  <p id="statusTxt"></p>
+  <div id="uploadArea">
+    <input type="file" id="imageUpload">
+    <button id="uploadImageBtn">Bild hochladen</button>
+  </div>
+  <button id="stopRoundBtn" class="hidden">Runde beenden</button>
+</div>
+
+<div id="votingSection" class="hidden">
+  <div id="votingContainer"></div>
+</div>
+
+<div id="adminResults" class="hidden">
+  <img id="winnerImage">
+  <h3 id="winnerName"></h3>
+  <table id="resultsTable"></table>
+</div>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>
