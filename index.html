@@ -64,6 +64,13 @@
     <ul id="gamePlayersList"></ul>
   </div>
   
+  <div id="promptArea">
+    <h4>KI-Prompt eingeben:</h4>
+    <textarea id="promptInput" placeholder="Beschreibe was du erstellen möchtest..." rows="3" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; resize: vertical; font-family: inherit;"></textarea>
+    <button id="enhancePromptBtn" style="margin: 10px 5px;">✨ Mit Gemini verbessern</button>
+    <button id="clearPromptBtn" style="margin: 10px 5px; background: #666;">🗑️ Löschen</button>
+  </div>
+
   <div id="uploadArea">
     <input type="file" id="imageUpload">
     <button id="uploadImageBtn">Bild hochladen</button>
@@ -92,6 +99,13 @@
   <button id="newRoundBtn">Neue Runde starten</button>
 </div>
 
+<script type="importmap">
+{
+  "imports": {
+    "@google/generative-ai": "https://esm.run/@google/generative-ai"
+  }
+}
+</script>
 <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -2,12 +2,17 @@ import { db } from "./firebase-config.js";
 import {
   doc, setDoc, getDoc, updateDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 let currentGameId = null;
 let userName = null;
 let isHost = false;
 let gameTimer = null;
 let timeRemaining = 90; // 1.5 minutes in seconds
+
+// Gemini AI Integration
+const GEMINI_API_KEY = 'AIzaSyB2rnjkUqZ7zsya8A4-NXjuu8_V2kmJRfQ';
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // Notification system
 function showNotification(message, type = "info") {
@@ -168,6 +173,80 @@ document.getElementById("joinGameBtn").onclick = async () => {
   document.getElementById("statusTxt").innerText = "Warte, bis der Host die Runde startet...";
   
   setupGameListener();
+};
+
+// Gemini AI Functions
+async function enhancePromptWithGemini(userPrompt) {
+  if (!userPrompt.trim()) {
+    showNotification("Bitte gib zuerst einen Prompt ein!", "error");
+    return null;
+  }
+  
+  try {
+    showNotification("🤖 Gemini verbessert deinen Prompt...", "info");
+    
+    // Get the model
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Create the prompt for enhancement
+    const prompt = `Du bist ein Experte für KI-Bildgenerierung. Verbessere folgenden Prompt für bessere, detailliertere und kreativere Ergebnisse. Mache ihn spezifischer, füge Stil-Beschreibungen hinzu und optimiere ihn für KI-Tools wie DALL-E, Midjourney oder Stable Diffusion. Gib nur den verbesserten Prompt zurück, keine Erklärungen:
+
+Ursprünglicher Prompt: "${userPrompt}"`;
+    
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const enhancedPrompt = response.text().trim();
+    
+    if (enhancedPrompt) {
+      showNotification("✨ Prompt mit Gemini verbessert!", "success");
+      return enhancedPrompt;
+    } else {
+      throw new Error('Leere Antwort von Gemini');
+    }
+  } catch (error) {
+    console.error('Gemini API Error:', error);
+    showNotification("❌ Fehler bei Gemini API. Versuche es später erneut.", "error");
+    return null;
+  }
+}
+
+// Prompt Enhancement Button Handler
+document.getElementById("enhancePromptBtn").onclick = async () => {
+  const promptInput = document.getElementById("promptInput");
+  const currentPrompt = promptInput.value.trim();
+  
+  if (!currentPrompt) {
+    showNotification("Bitte gib zuerst einen Prompt ein!", "error");
+    promptInput.focus();
+    return;
+  }
+  
+  // Disable button during processing
+  const enhanceBtn = document.getElementById("enhancePromptBtn");
+  enhanceBtn.disabled = true;
+  enhanceBtn.innerText = "🤖 Verarbeitung...";
+  
+  try {
+    const enhancedPrompt = await enhancePromptWithGemini(currentPrompt);
+    
+    if (enhancedPrompt) {
+      promptInput.value = enhancedPrompt;
+      promptInput.style.height = 'auto';
+      promptInput.style.height = promptInput.scrollHeight + 'px'; // Auto-resize
+    }
+  } finally {
+    // Re-enable button
+    enhanceBtn.disabled = false;
+    enhanceBtn.innerText = "✨ Mit Gemini verbessern";
+  }
+};
+
+// Clear Prompt Button Handler
+document.getElementById("clearPromptBtn").onclick = () => {
+  document.getElementById("promptInput").value = "";
+  document.getElementById("promptInput").style.height = 'auto';
+  showNotification("🗑️ Prompt gelöscht", "info");
 };
 
 // Timer functions
