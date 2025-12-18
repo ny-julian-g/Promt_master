@@ -444,3 +444,10 @@ input:focus {
   0%, 100% { transform: rotate(-5deg); }
   50% { transform: rotate(5deg); }
 }
+#gameInstruction {
+  border: 2px dashed #ffeb3b;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  background: #ffffff11;
+}
