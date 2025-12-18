@@ -14,16 +14,24 @@
   <button id="createGameBtn">Spiel erstellen (Host)</button>
 
   <h3>Spiel beitreten</h3>
+
+  <!-- NAME ZUERST -->
   <input
     id="usernameInput"
+    type="text"
     placeholder="Dein Name"
     required
     minlength="2"
   >
+
+  <!-- DANN CODE -->
   <input
     id="joinCodeInput"
+    type="text"
     placeholder="Gruppencode"
   >
+
+  <!-- BUTTON GANZ UNTEN -->
   <button id="joinGameBtn">Beitreten</button>
 </div>
 
@@ -44,6 +52,7 @@
     <h4>Teilnehmer:</h4>
     <ul id="gamePlayersList"></ul>
   </div>
+
   <div id="uploadArea">
     <input type="file" id="imageUpload">
     <button id="uploadImageBtn">Bild hochladen</button>
