@@ -178,10 +178,16 @@ document.getElementById("joinGameBtn").onclick = async () => {
     players: [...snap.data().players, name]
   });
 
+  // Show "Runde beigetreten" message first
+  showNotification("🎄 Runde beigetreten! 🎅", "success");
+  
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("gameScreen").classList.remove("hidden");
   document.getElementById("uploadArea").classList.add("hidden");
-  document.getElementById("statusTxt").innerText = "Warte, bis der Host die Runde startet...";
+  document.getElementById("hostTemplateImage").classList.add("hidden");
+  document.getElementById("promptArea").classList.add("hidden");
+  
+  document.getElementById("statusTxt").innerText = "🎄 Warte bis Santa (Host) die Runde startet... 🎅";
   
   setupGameListener();
 };
@@ -1016,17 +1022,20 @@ function setupGameListener() {
       // Show game screen for everyone
       document.getElementById("gameScreen").classList.remove("hidden");
       
-      // Show template image and instructions for all players
+      // Show template image and instructions for all players ONLY when round is active
       if (gameData.templateImage) {
         document.getElementById("hostTemplateImage").classList.remove("hidden");
         document.getElementById("templateImage").src = gameData.templateImage;
       }
       
+      // Show prompt area ONLY when round is active
+      document.getElementById("promptArea").classList.remove("hidden");
+      
       if (isHost) {
-        document.getElementById("statusTxt").innerText = "Runde läuft! Warte auf Bilder der Spieler...";
+        document.getElementById("statusTxt").innerText = "🎅 Runde läuft! Warte auf Bilder der Elfen... 🧝‍♂️";
         document.getElementById("uploadArea").classList.add("hidden");
       } else {
-        document.getElementById("statusTxt").innerText = "Erstelle dein Bild basierend auf der Vorlage!";
+        document.getElementById("statusTxt").innerText = "🎄 Erstelle dein Bild basierend auf Santa's Vorlage! ✨";
         // Reset upload area visibility if round restarted
         if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
           document.getElementById("uploadArea").classList.remove("hidden");
