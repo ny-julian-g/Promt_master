@@ -986,20 +986,15 @@ function setupGameListener() {
       }
     }
     
-    // Display template image when available
-    if (gameData.templateImage) {
-      const templateImg = document.getElementById("templateImage");
-      const hostTemplateDiv = document.getElementById("hostTemplateImage");
-      
-      if (templateImg && hostTemplateDiv) {
-        templateImg.src = gameData.templateImage;
-        hostTemplateDiv.classList.remove("hidden");
-        
-        // Show notification to all players that template is ready
-        if (!isHost && !gameData.roundActive) {
-          showNotification("📷 Vorlage-Bild vom Host hochgeladen!", "info");
-        }
+    // Show notification when template image is uploaded but don't display it yet
+    if (gameData.templateImage && !gameData.roundActive) {
+      // Show notification to all players that template is ready
+      if (!isHost) {
+        showNotification("🎄 Santa hat ein Weihnachtswunder hochgeladen! Warte auf den Start! 🎅", "info");
       }
+      
+      // Keep template image hidden until round starts
+      document.getElementById("hostTemplateImage").classList.add("hidden");
     }
     
     // Update timer for all players
