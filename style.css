@@ -265,3 +265,10 @@ td {
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+#gameInstruction {
+  border: 2px dashed #ffeb3b;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  background: #ffffff11;
+}
