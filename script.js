@@ -44,10 +44,38 @@ document.getElementById("joinGameBtn").onclick = async () => {
   document.getElementById("gameScreen").classList.remove("hidden");
 };
 
+function showAllImages(data) {
+  const section = document.getElementById("allImagesSection");
+  const gallery = document.getElementById("imageGallery");
+  
+  if (Object.keys(data.uploadedImages || {}).length === 0) {
+    section.classList.add("hidden");
+    return;
+  }
+  
+  section.classList.remove("hidden");
+  gallery.innerHTML = "";
+  
+  Object.entries(data.uploadedImages).forEach(([author, imageData]) => {
+    const imageDiv = document.createElement("div");
+    imageDiv.style.cssText = "display: inline-block; margin: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; text-align: center;";
+    imageDiv.innerHTML = `
+      <h4>${author}</h4>
+      <img src="${imageData}" width="200" style="border-radius: 4px; max-height: 200px; object-fit: cover;">
+    `;
+    gallery.appendChild(imageDiv);
+  });
+}
+
 onSnapshot(
   () => currentGameId ? doc(db, "games", currentGameId) : null,
   snap => {
     if (!snap?.exists()) return;
-    console.log("LIVE UPDATE:", snap.data());
+    const data = snap.data();
+    console.log("LIVE UPDATE:", data);
+    
+    if (data.uploadedImages && Object.keys(data.uploadedImages).length > 0) {
+      showAllImages(data);
+    }
   }
 );
