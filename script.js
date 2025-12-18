@@ -361,51 +361,53 @@ function setupGameListener() {
 
     // Handle round start for all players
     if (gameData.roundActive) {
-      if (isHost) {
-        document.getElementById("uploadArea").classList.add("hidden");
-      console.log("Round is active - switching to game screen for user:", userName);
+        if (isHost) {
+            document.getElementById("uploadArea").classList.add("hidden");
+            console.log("Round is active - switching to game screen for user:", userName);
 
-      // Hide all other screens
-      document.getElementById("startScreen").classList.add("hidden");
-      document.getElementById("hostLobby").classList.add("hidden");
-      document.getElementById("votingSection").classList.add("hidden");
-      document.getElementById("adminResults").classList.add("hidden");
+            // Hide all other screens
+            document.getElementById("startScreen").classList.add("hidden");
+            document.getElementById("hostLobby").classList.add("hidden");
+            document.getElementById("votingSection").classList.add("hidden");
+            document.getElementById("adminResults").classList.add("hidden");
 
-      // Show game screen for everyone
-      document.getElementById("gameScreen").classList.remove("hidden");
+            // Show game screen for everyone
+            document.getElementById("gameScreen").classList.remove("hidden");
 
-      if (isHost) {
-        document.getElementById("statusTxt").innerText = "Runde gestartet! Warte auf Bilder...";
-        console.log("Host sees: Runde gestartet!");
-      } else {
-        document.getElementById("statusTxt").innerText = "Runde läuft! Lade dein Bild hoch.";
-        console.log("Player sees: Runde läuft!");
-      }
+            if (isHost) {
+                document.getElementById("statusTxt").innerText = "Runde gestartet! Warte auf Bilder...";
+                console.log("Host sees: Runde gestartet!");
+            } else {
+                document.getElementById("statusTxt").innerText = "Runde läuft! Lade dein Bild hoch.";
+                console.log("Player sees: Runde läuft!");
+            }
 
-      // Reset upload area visibility if round restarted
-      if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
-        document.getElementById("uploadArea").classList.remove("hidden");
-        console.log("Upload area shown for user:", userName);
-      }
-    }
+            // Reset upload area visibility if round restarted
+            if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
+                document.getElementById("uploadArea").classList.remove("hidden");
+                console.log("Upload area shown for user:", userName);
+            }
+        }
 
-    // Display all uploaded images in real-time
-    if (gameData.uploadedImages && Object.keys(gameData.uploadedImages).length > 0) {
-      displayAllImages(gameData.uploadedImages);
+        // Display all uploaded images in real-time
+        if (gameData.uploadedImages && Object.keys(gameData.uploadedImages).length > 0) {
+            displayAllImages(gameData.uploadedImages);
 
-      // Show stop round button for host when images are uploaded
-      if (isHost && gameData.roundActive) {
-        document.getElementById("stopRoundBtn").classList.remove("hidden");
+            // Show stop round button for host when images are uploaded
+            if (isHost && gameData.roundActive) {
+                document.getElementById("stopRoundBtn").classList.remove("hidden");
 
-        document.getElementById("statusTxt").innerText =
-          "Runde läuft – warte auf Bilder der Spieler.";
-      } else if (!gameData.uploadedImages[userName]) {
-        document.getElementById("uploadArea").classList.remove("hidden");
-        document.getElementById("statusTxt").innerText =
-          "Runde läuft! Lade dein Bild hoch.";
-      }
-    }
+                document.getElementById("statusTxt").innerText =
+                    "Runde läuft – warte auf Bilder der Spieler.";
+            } else if (!gameData.uploadedImages[userName]) {
+                document.getElementById("uploadArea").classList.remove("hidden");
+                document.getElementById("statusTxt").innerText =
+                    "Runde läuft! Lade dein Bild hoch.";
+            }
+        }
 
-  });
-}
+    }}
+  )
+      ;
+  }
 
