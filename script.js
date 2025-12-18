@@ -23,6 +23,9 @@ document.getElementById("createGameBtn").onclick = async () => {
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("hostLobby").classList.remove("hidden");
   document.getElementById("lobbyCode").innerText = code;
+  
+  // Setup listener for host
+  setupGameListener();
 };
 
 document.getElementById("joinGameBtn").onclick = async () => {
@@ -42,6 +45,9 @@ document.getElementById("joinGameBtn").onclick = async () => {
 
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("gameScreen").classList.remove("hidden");
+  
+  // Setup listener for joined player
+  setupGameListener();
 };
 
 // Start round button handler
@@ -200,12 +206,16 @@ document.getElementById("newRoundBtn").onclick = async () => {
   document.getElementById("stopRoundBtn").classList.add("hidden");
 };
 
-onSnapshot(
-  () => currentGameId ? doc(db, "games", currentGameId) : null,
-  snap => {
+// Real-time listener function
+function setupGameListener() {
+  if (!currentGameId) return;
+  
+  onSnapshot(doc(db, "games", currentGameId), snap => {
     if (!snap?.exists()) return;
     const gameData = snap.data();
-    console.log("LIVE UPDATE:", gameData);
+    console.log("LIVE UPDATE - Current User:", userName, "Is Host:", isHost);
+    console.log("LIVE UPDATE - Game Data:", gameData);
+    console.log("LIVE UPDATE - Round Active:", gameData.roundActive);
     
     // Update all player lists
     if (gameData.players) {
@@ -262,17 +272,29 @@ onSnapshot(
     
     // Handle round start for all players
     if (gameData.roundActive) {
-      document.getElementById("gameScreen").classList.remove("hidden");
+      console.log("Round is active - switching to game screen for user:", userName);
+      
+      // Hide all other screens
+      document.getElementById("startScreen").classList.add("hidden");
+      document.getElementById("hostLobby").classList.add("hidden");
       document.getElementById("votingSection").classList.add("hidden");
       document.getElementById("adminResults").classList.add("hidden");
       
-      if (!isHost) {
+      // Show game screen for everyone
+      document.getElementById("gameScreen").classList.remove("hidden");
+      
+      if (isHost) {
+        document.getElementById("statusTxt").innerText = "Runde gestartet! Warte auf Bilder...";
+        console.log("Host sees: Runde gestartet!");
+      } else {
         document.getElementById("statusTxt").innerText = "Runde läuft! Lade dein Bild hoch.";
+        console.log("Player sees: Runde läuft!");
       }
       
       // Reset upload area visibility if round restarted
       if (!gameData.uploadedImages || !gameData.uploadedImages[userName]) {
         document.getElementById("uploadArea").classList.remove("hidden");
+        console.log("Upload area shown for user:", userName);
       }
     }
     
@@ -299,5 +321,5 @@ onSnapshot(
         showResults(gameData);
       }
     }
-  }
-);
+  });
+}
