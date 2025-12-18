@@ -47,6 +47,8 @@ document.getElementById("joinGameBtn").onclick = async () => {
   username = document.getElementById("usernameInput").value.trim();
   gameId = document.getElementById("joinCodeInput").value.trim();
 
+  if (!username || !gameId) return alert("Name & Code eingeben");
+
   const ref = doc(db, "games", gameId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return alert("Spiel existiert nicht");
@@ -69,7 +71,6 @@ function startSnapshot() {
     const data = snap.data();
     if (!data) return;
 
-    // Lobby
     lobbyPlayers.innerHTML = "";
     data.players.forEach(p => {
       const li = document.createElement("li");
@@ -77,7 +78,6 @@ function startSnapshot() {
       lobbyPlayers.appendChild(li);
     });
 
-    // Timer
     if (data.roundActive && data.roundEndsAt) {
       startTimer(data.roundEndsAt);
       stopRoundBtn.classList.toggle("hidden", !isHost);
@@ -102,15 +102,11 @@ document.getElementById("startRoundBtn").onclick = async () => {
     votes: {},
     winner: null
   });
-
-  gameScreen.classList.remove("hidden");
 };
 
 // ---------------- STOP ROUND ----------------
 stopRoundBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", gameId), {
-    roundActive: false
-  });
+  await updateDoc(doc(db, "games", gameId), { roundActive: false });
 };
 
 // ---------------- TIMER ----------------
