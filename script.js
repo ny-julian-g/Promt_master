@@ -9,6 +9,70 @@ let isHost = false;
 let gameTimer = null;
 let timeRemaining = 90; // 1.5 minutes in seconds
 
+// Notification system
+function showNotification(message, type = "info") {
+  // Remove existing notifications
+  const existingNotifications = document.querySelectorAll('.notification');
+  existingNotifications.forEach(n => n.remove());
+  
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerText = message;
+  
+  // Styling
+  notification.style.position = 'fixed';
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.padding = '15px 25px';
+  notification.style.borderRadius = '8px';
+  notification.style.fontWeight = '600';
+  notification.style.fontSize = '16px';
+  notification.style.zIndex = '9999';
+  notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+  notification.style.animation = 'slideIn 0.3s ease-out';
+  
+  // Type-specific styling
+  if (type === 'success') {
+    notification.style.background = '#4CAF50';
+    notification.style.color = 'white';
+  } else if (type === 'error') {
+    notification.style.background = '#f44336';
+    notification.style.color = 'white';
+  } else {
+    notification.style.background = '#2196F3';
+    notification.style.color = 'white';
+  }
+  
+  // Add animation CSS if not exists
+  if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 4000);
+}
+
 document.getElementById("createGameBtn").onclick = async () => {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   currentGameId = code;
@@ -51,10 +115,20 @@ document.getElementById("uploadHostImageBtn").onclick = async () => {
       templateImage: imageData
     });
     
-    document.getElementById("startRoundBtn").classList.remove("hidden");
+    // Visual feedback for successful upload
     document.getElementById("hostImageUpload").style.opacity = "0.5";
     document.getElementById("uploadHostImageBtn").disabled = true;
-    alert("Vorlage-Bild hochgeladen! Du kannst jetzt die Runde starten.");
+    document.getElementById("uploadHostImageBtn").innerText = "✓ Hochgeladen";
+    document.getElementById("uploadHostImageBtn").style.background = "#4CAF50";
+    
+    // Show success notification
+    showNotification("✅ Vorlage-Bild erfolgreich hochgeladen!", "success");
+    
+    // Enable start button if not already enabled
+    const startBtn = document.getElementById("startRoundBtn");
+    startBtn.disabled = false;
+    startBtn.style.background = "linear-gradient(135deg, #4CAF50, #45a049)";
+    startBtn.innerText = "🚀 Runde starten";
   };
   
   reader.readAsDataURL(file);
@@ -391,6 +465,11 @@ function setupGameListener() {
       if (templateImg && hostTemplateDiv) {
         templateImg.src = gameData.templateImage;
         hostTemplateDiv.classList.remove("hidden");
+        
+        // Show notification to all players that template is ready
+        if (!isHost && !gameData.roundActive) {
+          showNotification("📷 Vorlage-Bild vom Host hochgeladen!", "info");
+        }
       }
     }
     
