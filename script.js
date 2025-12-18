@@ -106,7 +106,9 @@ document.getElementById("startRoundBtn").onclick = async () => {
 
 // ---------------- STOP ROUND ----------------
 stopRoundBtn.onclick = async () => {
-  await updateDoc(doc(db, "games", gameId), { roundActive: false });
+  await updateDoc(doc(db, "games", gameId), {
+    roundActive: false
+  });
 };
 
 // ---------------- TIMER ----------------
@@ -122,6 +124,7 @@ function startTimer(endTime) {
 // ---------------- UPLOAD ----------------
 document.getElementById("uploadImageBtn").onclick = async () => {
   if (isHost) return;
+
   const file = document.getElementById("imageUpload").files[0];
   if (!file) return;
 
@@ -146,7 +149,7 @@ function showVoting(data) {
     const div = document.createElement("div");
     div.innerHTML = `
       <img src="${img}" width="200">
-      <button onclick="vote('${name}')">${name}</button>
+      <button onclick="vote('${name}')">Für ${name}</button>
     `;
     c.appendChild(div);
   });
