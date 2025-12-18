@@ -67,8 +67,31 @@
   <div id="promptArea">
     <h4>KI-Prompt eingeben:</h4>
     <textarea id="promptInput" placeholder="Beschreibe was du erstellen möchtest..." rows="3" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; resize: vertical; font-family: inherit;"></textarea>
-    <button id="enhancePromptBtn" style="margin: 10px 5px;">✨ Mit Gemini verbessern</button>
-    <button id="clearPromptBtn" style="margin: 10px 5px; background: #666;">🗑️ Löschen</button>
+    
+    <div style="margin: 10px 0;">
+      <label for="aiModelSelect" style="font-weight: 600; margin-right: 10px;">KI-Modell wählen:</label>
+      <select id="aiModelSelect" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit;">
+        <option value="stable-diffusion-xl">Stable Diffusion XL (Realistisch)</option>
+        <option value="stable-diffusion-v1-5">Stable Diffusion v1.5 (Klassisch)</option>
+        <option value="dalle-mini">DALL-E Mini (Schnell)</option>
+        <option value="midjourney-style">Midjourney Style (Künstlerisch)</option>
+        <option value="anime-diffusion">Anime Diffusion (Anime-Stil)</option>
+      </select>
+    </div>
+    
+    <div style="margin: 10px 0;">
+      <button id="enhancePromptBtn" style="margin: 5px;">✨ Mit Gemini verbessern</button>
+      <button id="generateImageBtn" style="margin: 5px; background: linear-gradient(135deg, #ff6b6b, #ee5a24);">🎨 Bild generieren</button>
+      <button id="clearPromptBtn" style="margin: 5px; background: #666;">🗑️ Löschen</button>
+    </div>
+    
+    <div id="generatedImageArea" class="hidden" style="margin: 15px 0; padding: 15px; border: 2px dashed #4CAF50; border-radius: 10px; background: #f9f9f9;">
+      <h4>🎨 Generiertes Bild:</h4>
+      <img id="generatedImage" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin: 10px 0;">
+      <br>
+      <button id="useGeneratedImageBtn" style="background: linear-gradient(135deg, #4CAF50, #45a049);">✅ Dieses Bild verwenden</button>
+      <button id="regenerateBtn" style="background: linear-gradient(135deg, #2196F3, #1976D2); margin-left: 10px;">🔄 Neu generieren</button>
+    </div>
   </div>
 
   <div id="uploadArea">
