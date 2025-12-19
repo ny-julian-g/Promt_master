@@ -280,11 +280,11 @@ document.getElementById("uploadImageBtn").onclick = async () => {
       const snap = await getDoc(ref);
       const gameData = snap.data();
       
+      // Ensure uploadedImages is initialized as an object
+      const currentImages = gameData.uploadedImages || {};
+      
       await updateDoc(ref, {
-        uploadedImages: {
-          ...gameData.uploadedImages,
-          [userName]: imageData
-        }
+        [`uploadedImages.${userName}`]: imageData
       });
       
       // Show success notification
