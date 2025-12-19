@@ -9,7 +9,8 @@
 <body>
 <!-- Music Player -->
 <!-- Music Player -->
-<div id="musicPlayer" style="position: fixed; top: 10px; right: 10px; z-index: 10000; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px; border: 2px solid #ffeb3b; box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);">
+<div id="musicPlayer" style="position: fixed; top: 10px; left: 10px; z-index: 10000; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px; border: 2px solid #ffeb3b; box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);"
+ background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px; border: 2px solid #ffeb3b; box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);">
   <button id="musicToggleBtn" onclick="toggleMusicPlayer()" style="width:100%; margin-bottom:8px;">
     🎵 Musik ein-/ausfahren
   </button>
@@ -24,8 +25,6 @@
     <div style="display: flex; align-items: center; gap: 10px;">
       <button id="playPauseBtn">▶️ Play</button>
       <button id="stopBtn">⏹️ Stop</button>
-      <input type="range" id="volumeSlider" min="0" max="100" value="50">
-      <span id="volumeLabel">50%</span>
     </div>
 
     <div id="nowPlaying" style="margin-top:5px;"></div>
