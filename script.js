@@ -252,7 +252,7 @@ document.getElementById("startRoundBtn").onclick = async () => {
 // Image upload handler
 document.getElementById("uploadImageBtn").onclick = async () => {
   if (isHost) {
-    alert("Host kann keine Bilder hochladen");
+    showNotification("❌ Host kann keine Bilder hochladen", "error");
     return;
   }
 
@@ -260,27 +260,42 @@ document.getElementById("uploadImageBtn").onclick = async () => {
   const file = fileInput.files[0];
   
   if (!file) {
-    alert("Bitte wähle ein Bild aus");
+    showNotification("⚠️ Bitte wähle ein Bild aus", "error");
     return;
+  }
+  
+  // Check if it's a PNG file
+  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
+    showNotification("🎄 PNG-Bild wird hochgeladen...", "info");
+  } else {
+    showNotification("📸 Bild wird hochgeladen...", "info");
   }
   
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const imageData = e.target.result;
-    
-    const ref = doc(db, "games", currentGameId);
-    const snap = await getDoc(ref);
-    const gameData = snap.data();
-    
-    await updateDoc(ref, {
-      uploadedImages: {
-        ...gameData.uploadedImages,
-        [userName]: imageData
-      }
-    });
-    
-    document.getElementById("uploadArea").classList.add("hidden");
-    document.getElementById("statusTxt").innerText = "Bild hochgeladen! Warte auf andere Spieler...";
+    try {
+      const imageData = e.target.result;
+      
+      const ref = doc(db, "games", currentGameId);
+      const snap = await getDoc(ref);
+      const gameData = snap.data();
+      
+      await updateDoc(ref, {
+        uploadedImages: {
+          ...gameData.uploadedImages,
+          [userName]: imageData
+        }
+      });
+      
+      // Show success notification
+      showNotification("✅ Weihnachtsbild erfolgreich hochgeladen! 🎅", "success");
+      
+      document.getElementById("uploadArea").classList.add("hidden");
+      document.getElementById("statusTxt").innerText = "Bild hochgeladen! Warte auf andere Spieler...";
+    } catch (error) {
+      showNotification("❌ Fehler beim Hochladen des Bildes", "error");
+      console.error("Upload error:", error);
+    }
   };
   
   reader.readAsDataURL(file);
