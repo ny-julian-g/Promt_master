@@ -97,7 +97,7 @@ document.getElementById("createGameBtn").onclick = async () => {
   setupGameListener();
 };
 
-// Host image upload handler
+// Host file upload handler (supports all file types)
 document.getElementById("uploadHostImageBtn").onclick = async () => {
   if (!isHost) return;
   
@@ -105,32 +105,48 @@ document.getElementById("uploadHostImageBtn").onclick = async () => {
   const file = fileInput.files[0];
   
   if (!file) {
-    alert("Bitte wähle ein Vorlage-Bild aus");
+    showNotification("⚠️ Bitte wähle eine Vorlage-Datei aus", "error");
     return;
   }
   
+  const fileName = file.name;
+  const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+  showNotification(`📁 Vorlage "${fileName}" (${fileSize}MB) wird hochgeladen...`, "info");
+  
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const imageData = e.target.result;
-    
-    await updateDoc(doc(db, "games", currentGameId), {
-      templateImage: imageData
-    });
-    
-    // Visual feedback for successful upload
-    document.getElementById("hostImageUpload").style.opacity = "0.5";
-    document.getElementById("uploadHostImageBtn").disabled = true;
-    document.getElementById("uploadHostImageBtn").innerText = "✓ Hochgeladen";
-    document.getElementById("uploadHostImageBtn").style.background = "#4CAF50";
-    
-    // Show success notification
-    showNotification("✅ Vorlage-Bild erfolgreich hochgeladen!", "success");
-    
-    // Enable start button if not already enabled
-    const startBtn = document.getElementById("startRoundBtn");
-    startBtn.disabled = false;
-    startBtn.style.background = "linear-gradient(135deg, #4CAF50, #45a049)";
-    startBtn.innerText = "🚀 Runde starten";
+    try {
+      const fileData = e.target.result;
+      
+      const templateInfo = {
+        data: fileData,
+        name: fileName,
+        type: file.type,
+        size: file.size
+      };
+      
+      await updateDoc(doc(db, "games", currentGameId), {
+        templateImage: templateInfo
+      });
+      
+      // Visual feedback for successful upload
+      document.getElementById("hostImageUpload").style.opacity = "0.5";
+      document.getElementById("uploadHostImageBtn").disabled = true;
+      document.getElementById("uploadHostImageBtn").innerText = "✓ Hochgeladen";
+      document.getElementById("uploadHostImageBtn").style.background = "#4CAF50";
+      
+      // Show success notification
+      showNotification(`✅ Vorlage "${fileName}" erfolgreich hochgeladen!`, "success");
+      
+      // Enable start button if not already enabled
+      const startBtn = document.getElementById("startRoundBtn");
+      startBtn.disabled = false;
+      startBtn.style.background = "linear-gradient(135deg, #4CAF50, #45a049)";
+      startBtn.innerText = "🚀 Runde starten";
+    } catch (error) {
+      showNotification("❌ Fehler beim Hochladen der Vorlage", "error");
+      console.error("Host upload error:", error);
+    }
   };
   
   reader.readAsDataURL(file);
@@ -249,10 +265,10 @@ document.getElementById("startRoundBtn").onclick = async () => {
   startGameTimer();
 };
 
-// Image upload handler
+// File upload handler (supports all file types)
 document.getElementById("uploadImageBtn").onclick = async () => {
   if (isHost) {
-    showNotification("❌ Host kann keine Bilder hochladen", "error");
+    showNotification("❌ Host kann keine Dateien hochladen", "error");
     return;
   }
 
@@ -260,40 +276,55 @@ document.getElementById("uploadImageBtn").onclick = async () => {
   const file = fileInput.files[0];
   
   if (!file) {
-    showNotification("⚠️ Bitte wähle ein Bild aus", "error");
+    showNotification("⚠️ Bitte wähle eine Datei aus", "error");
     return;
   }
   
-  // Check if it's a PNG file
-  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
-    showNotification("🎄 PNG-Bild wird hochgeladen...", "info");
+  // Get file type and show appropriate notification
+  const fileType = file.type;
+  const fileName = file.name;
+  const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Size in MB
+  
+  if (fileType.startsWith('image/')) {
+    showNotification(`🖼️ Bild "${fileName}" (${fileSize}MB) wird hochgeladen...`, "info");
+  } else if (fileType.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+    showNotification(`📝 Textdatei "${fileName}" (${fileSize}MB) wird hochgeladen...`, "info");
+  } else if (fileType.startsWith('video/')) {
+    showNotification(`🎬 Video "${fileName}" (${fileSize}MB) wird hochgeladen...`, "info");
+  } else if (fileType.startsWith('audio/')) {
+    showNotification(`🎵 Audiodatei "${fileName}" (${fileSize}MB) wird hochgeladen...`, "info");
   } else {
-    showNotification("📸 Bild wird hochgeladen...", "info");
+    showNotification(`📁 Datei "${fileName}" (${fileSize}MB) wird hochgeladen...`, "info");
   }
   
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
-      const imageData = e.target.result;
+      const fileData = e.target.result;
       
       const ref = doc(db, "games", currentGameId);
       const snap = await getDoc(ref);
       const gameData = snap.data();
       
-      // Ensure uploadedImages is initialized as an object
-      const currentImages = gameData.uploadedImages || {};
+      // Store file data with metadata
+      const fileInfo = {
+        data: fileData,
+        name: fileName,
+        type: fileType,
+        size: file.size
+      };
       
       await updateDoc(ref, {
-        [`uploadedImages.${userName}`]: imageData
+        [`uploadedImages.${userName}`]: fileInfo
       });
       
       // Show success notification
-      showNotification("✅ Weihnachtsbild erfolgreich hochgeladen! 🎅", "success");
+      showNotification(`✅ Datei "${fileName}" erfolgreich hochgeladen! 🎅`, "success");
       
       document.getElementById("uploadArea").classList.add("hidden");
-      document.getElementById("statusTxt").innerText = "Bild hochgeladen! Warte auf andere Spieler...";
+      document.getElementById("statusTxt").innerText = "Datei hochgeladen! Warte auf andere Spieler...";
     } catch (error) {
-      showNotification("❌ Fehler beim Hochladen des Bildes", "error");
+      showNotification("❌ Fehler beim Hochladen der Datei", "error");
       console.error("Upload error:", error);
     }
   };
@@ -412,14 +443,43 @@ function displayAllImages(uploadedImages, ratings = {}) {
     imageDiv.style.textAlign = "center";
     imageDiv.style.verticalAlign = "top";
     
-    const img = document.createElement("img");
-    img.src = imageData;
-    img.alt = `Bild von ${playerName}`;
-    img.style.maxWidth = "200px";
-    img.style.maxHeight = "200px";
-    img.style.borderRadius = "8px";
-    img.style.display = "block";
-    img.style.margin = "0 auto 10px auto";
+    // Handle different file types for display
+    let fileDisplayElement;
+    if (typeof imageData === 'string') {
+      // Old format - assume it's an image
+      fileDisplayElement = document.createElement("img");
+      fileDisplayElement.src = imageData;
+      fileDisplayElement.alt = `Datei von ${playerName}`;
+      fileDisplayElement.style.maxWidth = "200px";
+      fileDisplayElement.style.maxHeight = "200px";
+      fileDisplayElement.style.borderRadius = "8px";
+      fileDisplayElement.style.display = "block";
+      fileDisplayElement.style.margin = "0 auto 10px auto";
+    } else if (imageData.data) {
+      // New format with metadata
+      if (imageData.type && imageData.type.startsWith('image/')) {
+        // Display image
+        fileDisplayElement = document.createElement("img");
+        fileDisplayElement.src = imageData.data;
+        fileDisplayElement.alt = `Bild von ${playerName}`;
+        fileDisplayElement.style.maxWidth = "200px";
+        fileDisplayElement.style.maxHeight = "200px";
+        fileDisplayElement.style.borderRadius = "8px";
+        fileDisplayElement.style.display = "block";
+        fileDisplayElement.style.margin = "0 auto 10px auto";
+      } else {
+        // Display file info for non-images
+        fileDisplayElement = document.createElement("div");
+        fileDisplayElement.style.cssText = "background: #f0f0f0; border: 2px solid #ccc; border-radius: 8px; padding: 15px; margin: 0 auto 10px auto; max-width: 200px; text-align: center;";
+        const fileSize = (imageData.size / (1024 * 1024)).toFixed(2);
+        fileDisplayElement.innerHTML = `
+          <div style="font-size: 40px; margin-bottom: 10px;">📁</div>
+          <div style="color: #333; font-size: 12px; font-weight: bold; margin-bottom: 5px;">${imageData.name}</div>
+          <div style="color: #666; font-size: 10px;">${fileSize} MB</div>
+          <div style="color: #666; font-size: 10px;">${imageData.type || 'Unbekannter Typ'}</div>
+        `;
+      }
+    }
     
     const label = document.createElement("h4");
     label.innerText = playerName;
@@ -446,7 +506,7 @@ function displayAllImages(uploadedImages, ratings = {}) {
       avgDiv.innerHTML = "Noch keine Bewertungen";
     }
     
-    imageDiv.appendChild(img);
+    imageDiv.appendChild(fileDisplayElement);
     imageDiv.appendChild(label);
     imageDiv.appendChild(starRating);
     imageDiv.appendChild(avgDiv);
@@ -502,7 +562,38 @@ function displayResults(gameData) {
     const winnerScore = playerScores[winner];
     document.getElementById("winnerName").innerText = 
       `🏆 Gewinner: ${winner} (⭐ ${winnerScore.average.toFixed(1)} Sterne)`;
-    document.getElementById("winnerImage").src = gameData.uploadedImages[winner];
+    
+    const winnerImageElement = document.getElementById("winnerImage");
+    const winnerData = gameData.uploadedImages[winner];
+    
+    // Handle different file types for winner display
+    if (typeof winnerData === 'string') {
+      winnerImageElement.src = winnerData;
+      winnerImageElement.style.display = "block";
+    } else if (winnerData.data) {
+      if (winnerData.type && winnerData.type.startsWith('image/')) {
+        winnerImageElement.src = winnerData.data;
+        winnerImageElement.style.display = "block";
+      } else {
+        winnerImageElement.style.display = "none";
+        // Show file info instead
+        let winnerFileInfo = document.getElementById("winnerFileInfo");
+        if (!winnerFileInfo) {
+          winnerFileInfo = document.createElement("div");
+          winnerFileInfo.id = "winnerFileInfo";
+          winnerFileInfo.style.cssText = "background: #ffffff22; border: 2px solid #ffeb3b; border-radius: 12px; padding: 20px; margin: 20px auto; text-align: center; max-width: 300px;";
+          winnerImageElement.parentNode.insertBefore(winnerFileInfo, winnerImageElement.nextSibling);
+        }
+        const fileSize = (winnerData.size / (1024 * 1024)).toFixed(2);
+        winnerFileInfo.innerHTML = `
+          <div style="font-size: 60px; margin-bottom: 15px;">🏆📁</div>
+          <h3 style="color: #ffeb3b; margin: 10px 0;">Gewinnende Datei</h3>
+          <p style="color: #fff; font-size: 16px; margin: 5px 0;"><strong>Name:</strong> ${winnerData.name}</p>
+          <p style="color: #fff; font-size: 16px; margin: 5px 0;"><strong>Größe:</strong> ${fileSize} MB</p>
+          <p style="color: #fff; font-size: 16px; margin: 5px 0;"><strong>Typ:</strong> ${winnerData.type || 'Unbekannt'}</p>
+        `;
+      }
+    }
   }
   
   // Update results table
@@ -700,10 +791,40 @@ function setupGameListener() {
       // Show game screen for everyone
       document.getElementById("gameScreen").classList.remove("hidden");
       
-      // Show template image and instructions for all players ONLY when round is active
+      // Show template file and instructions for all players ONLY when round is active
       if (gameData.templateImage) {
         document.getElementById("hostTemplateImage").classList.remove("hidden");
-        document.getElementById("templateImage").src = gameData.templateImage;
+        const templateElement = document.getElementById("templateImage");
+        
+        // Handle different file types
+        if (typeof gameData.templateImage === 'string') {
+          // Old format - just the data
+          templateElement.src = gameData.templateImage;
+        } else if (gameData.templateImage.data) {
+          // New format with metadata
+          const template = gameData.templateImage;
+          if (template.type && template.type.startsWith('image/')) {
+            templateElement.src = template.data;
+            templateElement.style.display = "block";
+          } else {
+            // For non-image files, show file info
+            templateElement.style.display = "none";
+            let fileInfoDiv = document.getElementById("templateFileInfo");
+            if (!fileInfoDiv) {
+              fileInfoDiv = document.createElement("div");
+              fileInfoDiv.id = "templateFileInfo";
+              fileInfoDiv.style.cssText = "background: #ffffff22; border: 2px dashed #ffeb3b; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;";
+              document.getElementById("hostTemplateImage").appendChild(fileInfoDiv);
+            }
+            const fileSize = (template.size / (1024 * 1024)).toFixed(2);
+            fileInfoDiv.innerHTML = `
+              <h3 style="color: #ffeb3b; margin: 10px 0;">📁 Vorlage-Datei</h3>
+              <p style="color: #fff; font-size: 16px; margin: 5px 0;"><strong>Name:</strong> ${template.name}</p>
+              <p style="color: #fff; font-size: 16px; margin: 5px 0;"><strong>Größe:</strong> ${fileSize} MB</p>
+              <p style="color: #fff; font-size: 16px; margin: 5px 0;"><strong>Typ:</strong> ${template.type || 'Unbekannt'}</p>
+            `;
+          }
+        }
       }
       
       

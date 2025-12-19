@@ -46,8 +46,8 @@
 
   <div id="hostImageUpload">
     <h3>🎁 Weihnachtliche Vorlage hochladen: ⭐</h3>
-    <p>📸 Lade ein Bild hoch, das die Elfen nachbauen sollen!</p>
-    <input type="file" id="hostImageInput" accept="*.png,.jpg,.jpeg,.gif,.webp,.avif,image/png,image/jpeg,image/gif,image/webp,image/avif">
+    <p>📁 Lade eine beliebige Datei hoch (alle Formate erlaubt)!</p>
+    <input type="file" id="hostImageInput">
     <button id="uploadHostImageBtn">🎄 Weihnachts-Vorlage hochladen</button>
   </div>
 
@@ -91,15 +91,18 @@
   
 
   <div id="uploadArea">
-    <h4>🎁 Lade dein Weihnachtsbild hoch: 📸</h4>
+    <h4>🎁 Lade deine Datei hoch: 📸</h4>
     <p style="color: #ffeb3b; margin: 10px 0;">
       💡 Tipp: Nutze <a href="https://gemini.google.com/" target="_blank" style="color: #ff5252; text-decoration: underline;">Google Gemini</a> um Bilder zu generieren!
     </p>
     <p style="color: #4CAF50; margin: 15px 0; font-weight: bold;">
       🤖 <a href="#" id="aiLink" style="color: #4CAF50; text-decoration: underline;">NUTZE DIESE KI</a> [Platzhalter für KI-Tool]
     </p>
-    <input type="file" id="imageUpload" accept="*.png,.jpg,.jpeg,.gif,.webp,.avif,image/png,image/jpeg,image/gif,image/webp,image/avif">
-    <button id="uploadImageBtn">🎄 Weihnachtsbild hochladen 🎅</button>
+    <p style="color: #fff; margin: 10px 0; font-size: 14px;">
+      📁 Alle Dateitypen erlaubt: Bilder, Text, Videos, Audio, etc. - Kein Größenlimit!
+    </p>
+    <input type="file" id="imageUpload">
+    <button id="uploadImageBtn">🎄 Datei hochladen 🎅</button>
   </div>
 
   <button id="stopRoundBtn" class="hidden">🎅 Weihnachts-Runde beenden! 🎄</button>
