@@ -8,22 +8,30 @@
 
 <body>
 <!-- Music Player -->
+<!-- Music Player -->
 <div id="musicPlayer" style="position: fixed; top: 10px; right: 10px; z-index: 10000; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 10px; border: 2px solid #ffeb3b; box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);">
-  <div style="color: #ffeb3b; font-weight: bold; margin-bottom: 10px; text-align: center; cursor: pointer;" onclick="toggleMusicPlayer()">🎵 Musik <span id="minimizeIcon">🔽</span></div>
+  <button id="musicToggleBtn" onclick="toggleMusicPlayer()" style="width:100%; margin-bottom:8px;">
+    🎵 Musik ein-/ausfahren
+  </button>
+
   <div id="musicControls">
     <div style="margin-bottom: 10px;">
-      <input type="text" id="youtubeUrl" placeholder="YouTube Link einfügen" style="width: 200px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: 12px;">
-      <button id="loadMusicBtn" style="padding: 5px 10px; margin-left: 5px; background: #ff5252; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">🎶 Laden</button>
+      <input type="text" id="youtubeUrl" placeholder="YouTube Link einfügen"
+        style="width: 200px; padding: 5px; border-radius: 5px;">
+      <button id="loadMusicBtn">🎶 Laden</button>
     </div>
+
     <div style="display: flex; align-items: center; gap: 10px;">
-      <button id="playPauseBtn" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">▶️ Play</button>
-      <button id="stopBtn" style="background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">⏹️ Stop</button>
-      <input type="range" id="volumeSlider" min="0" max="100" value="50" style="width: 80px;">
-      <span id="volumeLabel" style="color: #fff; font-size: 12px;">50%</span>
+      <button id="playPauseBtn">▶️ Play</button>
+      <button id="stopBtn">⏹️ Stop</button>
+      <input type="range" id="volumeSlider" min="0" max="100" value="50">
+      <span id="volumeLabel">50%</span>
     </div>
-    <div id="nowPlaying" style="color: #fff; font-size: 11px; margin-top: 5px; text-align: center;"></div>
+
+    <div id="nowPlaying" style="margin-top:5px;"></div>
   </div>
 </div>
+
 
 <!-- YouTube iframe for music -->
 <iframe id="musicFrame" width="0" height="0" style="position: absolute; top: -9999px; left: -9999px;" frameborder="0" allow="autoplay; encrypted-media"></iframe>
@@ -163,7 +171,22 @@
   </table>
   <button id="newRoundBtn">🎅 Nächste Weihnachts-Runde! 🦌</button>
 </div>
+<script>
+  let musicOpen = true;
+
+  function toggleMusicPlayer() {
+    const controls = document.getElementById("musicControls");
+    const btn = document.getElementById("musicToggleBtn");
+
+    musicOpen = !musicOpen;
+    controls.style.display = musicOpen ? "block" : "none";
+    btn.innerHTML = musicOpen
+      ? "🎵 Musik einfahren"
+      : "🎵 Musik ausfahren";
+  }
+</script>
 
 <script type="module" src="script.js"></script>
+
 </body>
 </html>

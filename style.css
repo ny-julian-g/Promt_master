@@ -636,3 +636,70 @@ input:focus {
 
   box-shadow: 0 6px 0 #b28704;
 }
+/* ===============================
+   MUSIC PLAYER – MINIMIZE / EXPAND
+================================ */
+
+#musicPlayer {
+  transition: all 0.3s ease;
+}
+
+/* minimierter Zustand */
+#musicPlayer.minimized {
+  width: 140px;
+  height: 42px;
+  padding: 8px 10px;
+  overflow: hidden;
+}
+
+/* Controls ausblenden */
+#musicPlayer.minimized #musicControls {
+  display: none;
+}
+
+/* Titelzeile kompakt */
+#musicPlayer.minimized > div:first-child {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+}
+/* ===============================
+   MUSIC PLAYER TOGGLE
+================================ */
+
+#musicPlayer {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 10000;
+  width: 260px;
+  transition: all 0.3s ease;
+}
+
+#musicPlayer.collapsed {
+  width: 120px;
+}
+
+#musicHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffeb3b;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#togglePlayerBtn {
+  background: #ff5252;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 16px;
+  color: white;
+}
+
+#musicPlayer.collapsed #musicControls {
+  display: none;
+}

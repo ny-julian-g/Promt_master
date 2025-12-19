@@ -1022,3 +1022,12 @@ if (document.readyState === 'loading') {
 } else {
   initializeMusicPlayer();
 }
+
+function toggleMusicPlayer() {
+  const player = document.getElementById("musicPlayer");
+  const btn = document.getElementById("togglePlayerBtn");
+
+  player.classList.toggle("collapsed");
+
+  btn.textContent = player.classList.contains("collapsed") ? "➕" : "➖";
+}
