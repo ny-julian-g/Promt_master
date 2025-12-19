@@ -9,6 +9,11 @@ let isHost = false;
 let gameTimer = null;
 let timeRemaining = 90; // 1.5 minutes in seconds
 
+// Music player variables
+let musicPlayer = null;
+let isPlaying = false;
+let currentVolume = 50;
+
 
 // Notification system
 function showNotification(message, type = "info") {
@@ -72,6 +77,107 @@ function showNotification(message, type = "info") {
       }
     }, 300);
   }, 4000);
+}
+
+// YouTube Music Player Functions
+function extractYouTubeVideoId(url) {
+  const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+function loadYouTubeMusic() {
+  const urlInput = document.getElementById("youtubeUrl");
+  const url = urlInput.value.trim();
+  
+  if (!url) {
+    showNotification("⚠️ Bitte gib einen YouTube Link ein", "error");
+    return;
+  }
+  
+  const videoId = extractYouTubeVideoId(url);
+  if (!videoId) {
+    showNotification("❌ Ungültiger YouTube Link", "error");
+    return;
+  }
+  
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&controls=0&rel=0&modestbranding=1`;
+  const musicFrame = document.getElementById("musicFrame");
+  musicFrame.src = embedUrl;
+  
+  document.getElementById("nowPlaying").innerText = `🎵 Geladen: YouTube Video ID ${videoId}`;
+  showNotification("✅ YouTube Musik erfolgreich geladen!", "success");
+  
+  // Enable play button
+  document.getElementById("playPauseBtn").disabled = false;
+}
+
+function togglePlayPause() {
+  const playPauseBtn = document.getElementById("playPauseBtn");
+  const musicFrame = document.getElementById("musicFrame");
+  
+  if (!musicFrame.src) {
+    showNotification("⚠️ Bitte lade zuerst eine YouTube URL", "error");
+    return;
+  }
+  
+  if (isPlaying) {
+    // Pause music by removing src temporarily
+    musicFrame.style.display = "none";
+    playPauseBtn.innerHTML = "▶️ Play";
+    playPauseBtn.style.background = "#4CAF50";
+    isPlaying = false;
+    showNotification("⏸️ Musik pausiert", "info");
+  } else {
+    // Play music
+    musicFrame.style.display = "block";
+    const currentSrc = musicFrame.src;
+    if (currentSrc.includes("autoplay=0")) {
+      musicFrame.src = currentSrc.replace("autoplay=0", "autoplay=1");
+    }
+    playPauseBtn.innerHTML = "⏸️ Pause";
+    playPauseBtn.style.background = "#ff9800";
+    isPlaying = true;
+    showNotification("▶️ Musik gestartet", "info");
+  }
+}
+
+function stopMusic() {
+  const musicFrame = document.getElementById("musicFrame");
+  const playPauseBtn = document.getElementById("playPauseBtn");
+  
+  musicFrame.src = "";
+  musicFrame.style.display = "none";
+  playPauseBtn.innerHTML = "▶️ Play";
+  playPauseBtn.style.background = "#4CAF50";
+  isPlaying = false;
+  
+  document.getElementById("nowPlaying").innerText = "";
+  document.getElementById("youtubeUrl").value = "";
+  showNotification("⏹️ Musik gestoppt", "info");
+}
+
+function updateVolume() {
+  const volumeSlider = document.getElementById("volumeSlider");
+  const volumeLabel = document.getElementById("volumeLabel");
+  
+  currentVolume = volumeSlider.value;
+  volumeLabel.innerText = `${currentVolume}%`;
+  
+  // Note: YouTube iframe API doesn't allow direct volume control from external domains
+  // This is mainly for UI feedback
+  showNotification(`🔊 Lautstärke: ${currentVolume}%`, "info");
+}
+
+// Initialize music player controls
+function initializeMusicPlayer() {
+  document.getElementById("loadMusicBtn").onclick = loadYouTubeMusic;
+  document.getElementById("playPauseBtn").onclick = togglePlayPause;
+  document.getElementById("stopBtn").onclick = stopMusic;
+  document.getElementById("volumeSlider").oninput = updateVolume;
+  
+  // Add some default Christmas music suggestions
+  document.getElementById("youtubeUrl").placeholder = "z.B. https://youtu.be/dQw4w9WgXcQ";
 }
 
 document.getElementById("createGameBtn").onclick = async () => {
@@ -903,4 +1009,16 @@ function setupGameListener() {
       }
     }
   });
+}
+
+// Initialize music player when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  initializeMusicPlayer();
+});
+
+// Also initialize immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeMusicPlayer);
+} else {
+  initializeMusicPlayer();
 }
